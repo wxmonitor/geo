@@ -174,8 +174,8 @@ d.current <- d.current %>%
                              wind_deg >= 356 && wind_deg <= 360 ~ 0L,
                              TRUE ~ wind_deg))
 
-d.shade <- data.frame(dusk = seq.POSIXt(d.current$sunset, by = 'day', length.out = 3), 
-                    dawn = seq.POSIXt(d.current$sunrise+86400, by = 'day', length.out = 3),
+d.shade <- data.frame(dusk = seq.POSIXt(d.current$sunset[1], by = 'day', length.out = 3), 
+                    dawn = seq.POSIXt(d.current$sunrise[1]+86400, by = 'day', length.out = 3),
                     top = Inf,
                     bottom = -Inf)
 
