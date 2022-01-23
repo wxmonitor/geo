@@ -1,6 +1,16 @@
-WX app with leaflet map integrated. Map set to initialize on NE Olympic Peninsula, but works anywhere.
-Pulls OpenWeather API for chosen location and generates current weather data and 48 forecast for:
-  Wind speed and direction
-  Rainfall chance and accumulation
-  Temperature and dew point
-  Barometric pressure
+**WX Monitor web app with leaflet map integrated**
+
+  This shiny app displays a leaflet map (initialized on NE Olympic Peninsula) which allows users to pick a location.
+  Location is used to pull open source weather data from OpenWeather API.
+  Current time, wind speed and direction are displayed. 
+  Ggplot objects are generated and displayed for 48 hour forecast data for the following:
+  
+    Wind Speed (kts)
+    Wind Direction (compass points)
+    Rainfall chance (%) and accumulation totals (mm)
+    Air temperature and dew point (°F)
+    Barometric pressure (mb)
+   
+  Web app is deployed on shiny server running on remote ubuntu 18.04 server. 
+  Accesible at https://monitor.wxnw.net/geo
+
