@@ -5,16 +5,20 @@ library(shiny)
 library(scales)
 library(ggtext)
 
-# Pick location weather test
+##### Location-enabled wx monitor app #####
 
+# Wind rose function to convert wind direction degrees to compass points
 wind.rose <- function(x) {
   upper <- seq(from = 11.25, by = 22.5, length.out = 17)
   card1 <- c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')
   ifelse(x>360 | x<0,NA,card1[findInterval(x,upper,rightmost.closed = T)+1])
 }
 
+
+# Force local time zone
 Sys.setenv(TZ="America/Los_Angeles")
 
+# Shiny UI
 ui <- fluidPage(
   h5("WX Monitor", align = "center"),
   h4("48 hour forecast", align = "center"),
@@ -31,9 +35,10 @@ ui <- fluidPage(
   plotOutput(outputId = "bar.plot", width = "100%", height = "400px")
 )
 
+# Shiny server
 server <- function(input, output, session) {
   
-  ## leaflet map
+  # Initialize leaflet map
   output$map <- renderLeaflet({
     leaflet(options = leafletOptions(
       attributionControl=FALSE)) %>% 
@@ -42,9 +47,10 @@ server <- function(input, output, session) {
       addProviderTiles(providers$Esri.NatGeoWorldMap)
   })
   
+  # Container for reactive values
   plot_rct <- reactiveValues()
   
-  # generate data in reactive
+  # Input location data from click event
   click_data <- observeEvent(
     input$map_click,
     {
@@ -52,39 +58,40 @@ server <- function(input, output, session) {
       clat <- click$lat
       clng <- click$lng
       
+      # Format coords for hover display
       lat.disp <- case_when(clat > 0 ~ paste(clat %>% round(2), "N"),
                             clat < 0 ~ paste(-clat %>% round(2), "S"))
       lng.disp <- case_when(clng < 0 ~ paste(-clng %>% round(2), "W"),
                             clng > 0 ~ paste(clng %>% round(2), "E"))
       
-      leafletProxy('map') %>% # use the proxy to save computation
+      # Use proxy to redraw map with location marker
+      leafletProxy('map') %>% 
         clearMarkers() %>%
         addMarkers(lng=clng, lat=clat, label = paste(lat.disp, lng.disp))
       
-      
+      #  Call API and decode JSON
       url <- paste0("https://api.openweathermap.org/data/2.5/onecall?lat=",
       clat, "&lon=", clng, "&exclude=minutely&units=imperial&appid=8d5cf85099c375dcad074eff91b0d5d9")
       weather.page <- fromJSON(url, flatten = TRUE)
-      hourly.forecast <- data.frame(weather.page$hourly)
-      hourly.forecast$dt <- as.POSIXct(hourly.forecast$dt, origin="1970-01-01")
-      current <- data.frame(weather.page$current)
-      current$dt <- as.POSIXct(current$dt, origin="1970-01-01")
-      current$sunrise <- as.POSIXct(current$sunrise, origin="1970-01-01")
-      current$sunset <- as.POSIXct(current$sunset, origin="1970-01-01")
       
-      hourly.forecast <- hourly.forecast %>%
-        mutate(wind_speed = wind_speed * 0.868976) %>%
-        mutate(wind_gust = wind_gust * 0.868976)
+      # Strip and format hourly data
+      hourly.forecast <- data.frame(weather.page$hourly) %>%
+        mutate(dt = as.POSIXct(dt, origin="1970-01-01")) %>%
+        mutate_at(vars(wind_speed, wind_gust), ~ . * 0.868976)
       
-      current <- current %>%
+      # Strip and format current data
+      current <- data.frame(weather.page$current) %>%
+        mutate_at(vars(dt, sunrise, sunset), ~ as.POSIXct(., origin="1970-01-01")) %>%
         mutate(wind_speed = wind_speed * 0.868976) %>%
         mutate(wind_deg = as.integer(wind_deg)) %>%
         mutate(mod_deg = case_when(wind_deg > 352 && wind_deg < 356 ~ 352L,
                                    wind_deg >= 356 && wind_deg <= 360 ~ 0L,
                                    TRUE ~ wind_deg))
       
+      # Load reactive container with current data
       plot_rct$current <- current
       
+      # Create night-time shade limits
       shade <- data.frame(dusk = seq.POSIXt(current$sunset, by = 'day', length.out = 3), 
                           dawn = seq.POSIXt(current$sunrise+86400, by = 'day', length.out = 3),
                           top = Inf,
@@ -96,6 +103,7 @@ server <- function(input, output, session) {
         mutate_at(vars(dusk, dawn),
                   ~ replace(., which(. < head(hourly.forecast$dt, 1)), head(hourly.forecast$dt, 1)))
       
+      # Wind rose polar plot
       plot_rct$rose <- ggplot(current, aes(x = mod_deg)) +
         coord_polar(theta = "x", start = -pi/45, direction = 1) +
         geom_bar(width = 7, color = "gray10", fill = "red") +
@@ -107,7 +115,7 @@ server <- function(input, output, session) {
           axis.text.y = element_blank(),
           axis.title = element_blank())
       
-      
+      # Wind direction plot 
       plot_rct$dir.plot <- ggplot() +
         geom_rect(data = shade, 
                   aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
@@ -121,7 +129,7 @@ server <- function(input, output, session) {
         scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
         scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
       
-      
+      # Barometric pressure plot
       plot_rct$bar.plot <- ggplot() + 
         geom_rect(data = shade, 
                   aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
@@ -136,7 +144,7 @@ server <- function(input, output, session) {
         scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
       
       
-      
+      # Wind speed and gust plot
       plot_rct$weather.plot <- ggplot() +
         geom_rect(data = shade, 
                   aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
@@ -151,6 +159,7 @@ server <- function(input, output, session) {
         xlab("") + 
         scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
       
+      # Temperature and dew point plot
       plot_rct$fog.plot <- ggplot() + 
         geom_rect(data = shade, 
                   aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
@@ -164,6 +173,7 @@ server <- function(input, output, session) {
         xlab("") +
         scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
       
+      # Rain plot
       if ("rain.1h" %in% colnames(hourly.forecast)) {
         
         plot_rct$rain.plot <- ggplot() +
@@ -202,10 +212,8 @@ server <- function(input, output, session) {
       
   })
   
-  output$time.current <- renderText({
-    paste("Current time:", Sys.time())
-  })
   
+  # Current wind output
   output$weather.label <- renderText({
     req(plot_rct$current)
     paste0(wind.rose(plot_rct$current$wind_deg), " ",
@@ -214,39 +222,48 @@ server <- function(input, output, session) {
     
   }) 
   
-  
+  # Wind plot output
   output$weather.plot <- renderPlot({
     plot_rct$weather.plot
   }) 
   
+  
+  # Current time output
   output$time.current <- renderText({
     paste("",format(Sys.time(), "%a %m-%d %H:%M"))
   })
   
   
+  # Wind direction plot output
   output$dir.plot <- renderPlot({
     plot_rct$dir.plot
   })
   
   
+  # Rain plot output
   output$rain.plot <- renderPlot({
     plot_rct$rain.plot
   })
   
   
+  # Temperature plot output
   output$fog.plot <- renderPlot({
     plot_rct$fog.plot
   })
   
   
+  # Barometer plot output
   output$bar.plot <- renderPlot({
     plot_rct$bar.plot
   }) 
   
+  
+  # Wind rose output
   output$rose <- renderPlot({
     plot_rct$rose
   }) 
   
 }
 
+# Execute app
 shinyApp(ui, server)
