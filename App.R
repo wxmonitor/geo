@@ -5,6 +5,7 @@ library(shiny)
 library(leaflet)
 library(jsonlite)
 library(scales)
+library(data.table)
 
 #### Both map apps in tabs #####
 
