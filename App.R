@@ -316,6 +316,8 @@ server <- function(input, output, session) {
       
       if (site == "KNOW"){
         
+        # Ediz Hook 
+        
         # Call API and decode JSON
         url <- "https://api.synopticdata.com/v2/stations/timeseries?stid=KNOW&obtimezone=local&recent=1440&vars=wind_speed,wind_gust,wind_direction,sea_level_pressure&units=english&token=652e4bd32bbf4621b835895f8c769bb6"
         total.page <- fromJSON(url, flatten = TRUE)
@@ -332,7 +334,7 @@ server <- function(input, output, session) {
                                              `Wind Direction` >= 356 && `Wind Direction` <= 360 ~ 0,
                                              TRUE ~ `Wind Direction`))
         
-        pressure.table <- data.frame(pressure.page[["STATION"]]$OBSERVATIONS.date_time, pressure.page[["STATION"]]$OBSERVATIONS.sea_level_pressure_set_1d) %>%
+        pressure.table <- data.frame(total.page[["STATION"]]$OBSERVATIONS.date_time, total.page[["STATION"]]$OBSERVATIONS.sea_level_pressure_set_1d) %>%
           setNames(c("Time", "Pressure (mb)")) %>%
           mutate(Time = as.POSIXct(Time, format = "%Y-%m-%dT%H:%M:%S%z"))
         
