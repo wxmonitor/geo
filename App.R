@@ -503,6 +503,8 @@ server <- function(input, output, session) {
           xlab("") +
           scale_x_datetime(limits = c(min(weather$Time), max(weather$Time)), expand = c(0, 0))
         
+        if (all(is.na(weather$Wind.Speed)) == FALSE) {
+        
         # Wind rose
         plot_rct$rose2 <- ggplot(weather, aes(x = first(na.omit(Mod.Dir)))) +
           coord_polar(theta = "x", start = -pi/45, direction = 1) +
@@ -514,25 +516,30 @@ server <- function(input, output, session) {
           theme(
             axis.text.y = element_blank(),
             axis.title = element_blank())
+        } else {plot_rct$rose2 <- ggplot() +
+          theme_void() +
+          geom_text(aes(0,0,label='No wind data'))}
+        
         
         
         if (all(is.na(weather$Wind.Speed)) == FALSE) {
           maxWind <- max(rbind(weather$Wind.Speed, weather$Gust), na.rm = TRUE)
         } else (maxWind <- 10)
         
-        
+          
         # Wind plot
         plot_rct$weather.plot2 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Wind.Speed), size = 1) +
-          geom_line(data = weather, aes(x = Time, y = Gust), color = "#FF0000") +
-          theme_bw() +
-          labs(
-            title = "**Wind Speed** and <span style='color:#FF0000;'>**Gust**</span></span>") +
-          theme(plot.title = element_markdown()) +
-          scale_y_continuous(breaks = seq(0, maxWind, 5)) +
-          scale_x_datetime(limits = c(min(weather$Time), max(weather$Time)), expand = c(0, 0)) +
-          ylab("Knots") +
-          xlab("")
+        geom_line(data = weather, aes(x = Time, y = Wind.Speed), size = 1) +
+        geom_line(data = weather, aes(x = Time, y = Gust), color = "#FF0000") +
+        theme_bw() +
+        labs(
+          title = "**Wind Speed** and <span style='color:#FF0000;'>**Gust**</span></span>") +
+        theme(plot.title = element_markdown()) +
+        scale_y_continuous(breaks = seq(0, maxWind, 5)) +
+        scale_x_datetime(limits = c(min(weather$Time), max(weather$Time)), expand = c(0, 0)) +
+        ylab("Knots") +
+        xlab("")
+        
         
         # PT last reading output
         output$time.label2 <- renderText({
@@ -778,11 +785,17 @@ server <- function(input, output, session) {
   output$bar.plot2 <- renderPlot({
     plot_rct$bar.plot2
   }) 
-  
+
+
   # Wind rose output
+  
   output$rose2 <- renderPlot({
     plot_rct$rose2
-  }) 
+    })
+
+  
+  
+
   
   ### Wave TAB ####
   
