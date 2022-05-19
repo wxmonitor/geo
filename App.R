@@ -470,7 +470,7 @@ server <- function(input, output, session) {
         
         # NBDC stations 
         # Call API 
-        weather <- fread(wind.link, 
+        weather <- fread(input = wind.link, 
                          skip = 2,
                          na.strings = "MM",
                          encoding = "UTF-8",
