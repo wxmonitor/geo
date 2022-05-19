@@ -462,8 +462,8 @@ DESW1,Destruction Island,47.675,-124.485,DESW1,https://www.ndbc.noaa.gov/data/5d
 46029,"Columbia River Bar, 20 NM W",46.163,-124.487,46029,https://www.ndbc.noaa.gov/data/5day2/46029_5day.txt,144,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46029.spec,24,NBDC
 46089,Tillamook,45.936,-125.793,46089,https://www.ndbc.noaa.gov/data/5day2/46089_5day.txt,144,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46089.spec,24,NBDC
 46005,"Aberdeen, 300 NM W",46.134,-131.079,46005,https://www.ndbc.noaa.gov/data/5day2/46005_5day.txt,144,NBDC,,,,
-46036,South Nomad,48.360,-133.94,46036,https://www.ndbc.noaa.gov/data/realtime2/46036.txt,24,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46036.txt,24,CA
-46206,La Perouse Bank,48.840,-126,46206,https://www.ndbc.noaa.gov/data/realtime2/46206.txt,24,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46206.txt,24,CA
+46036,South Nomad,48.36,-133.94,46036,https://www.ndbc.noaa.gov/data/realtime2/46036.txt,24,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46036.txt,24,CA
+46206,La Perouse Bank,48.84,-126,46206,https://www.ndbc.noaa.gov/data/realtime2/46206.txt,24,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46206.txt,24,CA
 46132,South Brooks,49.78,-127.89,46132,https://www.ndbc.noaa.gov/data/realtime2/46132.txt,24,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46132.txt,24,CA
 46050,Stonewall Bank,44.669,-124.546,46050,https://www.ndbc.noaa.gov/data/5day2/46050_5day.txt,144,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46050.spec,24,NBDC
 PORO3,Port Orford,42.739,-124.498,PORO3,https://www.ndbc.noaa.gov/data/realtime2/PORO3.txt,240,NBDC,,,,
