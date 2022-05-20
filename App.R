@@ -1308,7 +1308,7 @@ server <- function(input, output, session) {
     select("Station", "Year", "Month", "Day", "Hour", "Lat", "Lon",
            "Wind.Dir", "Wind.Speed", "Gust", "Wave.Height", "Pressure") %>%
     filter(Station == "SHIP") %>%
-    filter(Lat > 45 & Lat < 49 & Lon < -124 & Lon > -130) %>%
+    filter(Lat > 42 & Lat < 49 & Lon < -124 & Lon > -130) %>%
     unite(Date, Year, Month, Day, sep = "-", remove = TRUE) %>%
     unite(Time, Date, Hour, sep = " ", remove = TRUE) %>%
     mutate(Time = as.POSIXct(Time, format = "%Y-%m-%d %H")) %>%
