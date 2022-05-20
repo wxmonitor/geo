@@ -325,7 +325,10 @@ server <- function(input, output, session) {
   ### Station reports ####
   ########################
   
-  aprs.sites <- read.csv("aprs.sites.csv")
+  aprs.sites <- read.csv("aprs.sites.csv",
+                         colClasses = c("character", "character", "numeric", "numeric",
+                                        "character", "character", "integer", "character",
+                                        "logical", "character", "integer", "character"))
   
   output$map2 <- renderLeaflet({
     leaflet(options = leafletOptions(
@@ -470,7 +473,7 @@ server <- function(input, output, session) {
         
         # NBDC stations 
         # Call API 
-        weather <- fread(input = wind.link, 
+        weather <- fread(wind.link, 
                          skip = 2,
                          na.strings = "MM",
                          encoding = "UTF-8",
@@ -1290,12 +1293,14 @@ server <- function(input, output, session) {
                         skip = 2,
                         na.strings = "MM",
                         encoding = "UTF-8",
-                        colClasses = c(rep("character", 5), rep("numeric", 30)),
+                        colClasses = c(rep("character", 5), rep("numeric", 2),
+                                       "character", rep("numeric", 15), "character",
+                                       rep("numeric", 11)),
                         col.names = c("Station", "Year", "Month", "Day", "Hour", "Lat", "Lon",
                                       "Wind.Dir", "Wind.Speed", "Gust", "Wave.Height", 
                                       "DPD", "APD", "MWD", "Pressure", "Air.Temp", "Water.Temp",
                                       "Dew.Point", "Vis", "Press.Tend", "TCC", "S1HT", "S1PD",
-                                      "S2DIR", "S2HT", "S2PD", "S2DIR", rep(NA, 8)))
+                                      "S1DIR", "S2HT", "S2PD", "S2DIR", rep(NA, 8)))
   
   
   # Subset local observations, clean and format data
@@ -1317,7 +1322,6 @@ server <- function(input, output, session) {
   
   
   # Make wind arrow icon
-  
   getWindColor <- function(ship.weather) {
     sapply(ship.weather$Wind.Speed , function(Wind.Speed) {
       if (is.na(Wind.Speed)) {
@@ -1348,6 +1352,7 @@ server <- function(input, output, session) {
                               iconColor = "black",
                               markerColor = getWindColor(ship.weather))
   
+  # Make wave height icon 
   wave.weather <- ship.weather %>%
     filter(!is.na(ship.weather$Wave.Height))
   
@@ -1379,7 +1384,7 @@ server <- function(input, output, session) {
                               markerColor = getWaveColor(wave.weather),
                               fontFamily = "helvetica")
   
-  
+  # Render ship observation map 
   output$map4 <- renderLeaflet({
     leaflet(options = leafletOptions(
       attributionControl=FALSE)) %>% 
@@ -1392,8 +1397,8 @@ server <- function(input, output, session) {
                                       "kt",
                                       wind.rose(ship.weather$Wind.Dir),
                                       ship.weather$Time %>% format("%H:%M"))) %>%
-      addAwesomeMarkers(wave.weather$Lon %>% jitter(0.5),
-                        wave.weather$Lat,
+      addAwesomeMarkers(wave.weather$Lon + 0.2,
+                        wave.weather$Lat - 0.2,
                         icon = waveIcon,
                         popup = paste0(wave.weather$Wave.Height %>% round(0),"' ",
                                        ship.weather$Time %>% format("%H:%M")))
