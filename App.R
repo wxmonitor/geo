@@ -923,7 +923,7 @@ server <- function(input, output, session) {
                     aes(x = Time, y = Wave.Height, angle=-Mean.Wave.Dir+270), label="→", size = 8) +
           theme_bw() +
           labs(
-            title = "**Wave Height, Direction (true)** and <span style='color:#FF0000;'>**Dominant Period**</span></span>") +
+            title = "**Wave Height, Direction (true)** and<br><span style='color:#FF0000;'>**Dominant Period**</span></span>") +
           theme(plot.title = element_markdown()) +
           scale_y_continuous(breaks = seq(0, ymax, 2),
                              sec.axis = sec_axis(~., name = "Seconds")) +
@@ -1118,8 +1118,8 @@ server <- function(input, output, session) {
           mutate(Mod.W.Wave.Dir = case_when(W.Wave.Dir > 350 ~  0,
                                             TRUE ~ W.Wave.Dir)) %>%
           mutate(Mod.Mean.Dir = case_when(Mean.Wave.Dir > 350 ~  0,
-                                          TRUE ~ Mean.Wave.Dir)) %>%
-          left_join(dom.weather, by = "Time")
+                                          TRUE ~ Mean.Wave.Dir)) 
+
         
         mean.ymax <- max(rbind(weather$Wave.Height, weather$Ave.Period), na.rm = TRUE)
         
@@ -1133,7 +1133,7 @@ server <- function(input, output, session) {
                     aes(x = Time, y = Wave.Height, angle=-Mean.Wave.Dir+270), label="→", size = 8) +
           theme_bw() +
           labs(
-            title = "**Wave Height, Direction (true),** and <span style='color:#FF0000;'>**Average Period**</span></span>") +
+            title = "**Wave Height, Direction (true),** and<br><span style='color:#FF0000;'>**Average Period**</span></span>") +
           theme(plot.title = element_markdown()) +
           scale_y_continuous(breaks = seq(0, mean.ymax, 2),
                              sec.axis = sec_axis(~., name = "Seconds",
@@ -1152,7 +1152,7 @@ server <- function(input, output, session) {
                      size = 1, position = position_jitter(height = 0.2)) +
           geom_jitter(height = 0.6) +
           theme_bw() +
-          labs(title = "<span style='color:#FF0000;'>**Mean,**</span></span> <span style='color:#00eaca;'>**Swell,**</span></span> and 
+          labs(title = "<span style='color:#FF0000;'>**Mean,**</span></span> <span style='color:#00eaca;'>**Swell,**</span></span> and<br> 
                **Wind Wave** Direction") +
           theme(plot.title = element_markdown()) +
           ylab("") +
@@ -1188,7 +1188,7 @@ server <- function(input, output, session) {
                     aes(x = Time, y = Swell.Height, angle=-Swell.Dir+270), label="→", size = 8) +
           theme_bw() +
           labs(
-            title = "**Swell Height, Direction (true),** and <span style='color:#FF0000;'>**Period**</span></span>") +
+            title = "**Swell Height, Direction (true),** and<br><span style='color:#FF0000;'>**Period**</span></span>") +
           theme(plot.title = element_markdown()) +
           scale_y_continuous(breaks = seq(0, mean.ymax, 2),
                              sec.axis = sec_axis(~., name = "Seconds",
@@ -1207,7 +1207,7 @@ server <- function(input, output, session) {
                     aes(x = Time, y = W.Wave.Height, angle=-W.Wave.Dir+270), label="→", size = 8) +
           theme_bw() +
           labs(
-            title = "**Wind Wave Height, Direction (true),** and <span style='color:#FF0000;'>**Period**</span></span>") +
+            title = "**Wind Wave Height, Direction (true),** and<br><span style='color:#FF0000;'>**Period**</span></span>") +
           theme(plot.title = element_markdown()) +
           scale_y_continuous(breaks = seq(0, mean.ymax, 2),
                              sec.axis = sec_axis(~., name = "Seconds",
@@ -1232,7 +1232,7 @@ server <- function(input, output, session) {
           line3 <- paste0("Wind waves ", wind.rose(first(na.omit(weather$W.Wave.Dir))), " ",
                           round(first(na.omit(weather$W.Wave.Height)), 0), "' ",
                           "at ", first(na.omit(weather$W.Wave.Period)), " seconds")
-          line4 <- paste("Dominant period", first(na.omit(weather$Dom.Period)), "seconds")
+          line4 <- paste("Dominant period", first(na.omit(dom.weather$Dom.Period)), "seconds")
           HTML(paste(line1, line2, line3, line4, sep = "<br/>"))
           
         })
