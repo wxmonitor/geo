@@ -7,7 +7,7 @@ library(jsonlite)
 library(scales)
 library(data.table)
 
-#### Edited 5/18/22 to add offshore + Oregon stations ####
+#### Edited 5/29/22 to add coastal forecast & discussion ####
 #### Add Cape Flattery, Cape Elizabeth when back on station ####
 
 # Wind rose function to convert wind direction degrees to compass points
@@ -22,6 +22,18 @@ wind.deg <- function(x) {
   degree <- seq(from = 0, by = 22.5, length.out = 16)
   card1 <- c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW')
   degree[match(x, card1)]
+}
+
+marcast <- function(zone) {
+  if (zone == "afd") {
+    link <- "https://tgftp.nws.noaa.gov/data/raw/fx/fxus66.ksew.afd.sew.txt"
+    data <- readLines(link)
+    return(paste0(data[grep("Area", data):length(data)], sep = "\n"))
+  } else {
+    link <- paste0("https://tgftp.nws.noaa.gov/data/forecasts/marine/coastal/pz/", zone, ".txt")
+    data <- readLines(link)
+    return(paste0(data[grep("PZZ", data):length(data)], sep = "\n"))
+  }
 }
 
 # Force local time zone
@@ -71,7 +83,7 @@ ui <- tabsetPanel(
              leafletOutput("map4", width = "100%", height = "400px")
            )
   ),
-  tabPanel("Forecast",
+  tabPanel("Open Forecast",
            fluidPage(
              h3("WX Monitor", align = "center"),
              h3("48 Hour Forecast", align = "center"),
@@ -86,7 +98,40 @@ ui <- tabsetPanel(
              plotOutput(outputId = "rain.plot", width = "100%", height = "400px"),
              plotOutput(outputId = "bar.plot", width = "100%", height = "400px")
            )
+  ),
+  tabPanel("NWS Forecast",
+           fluidPage(
+             h3("WX Monitor", align = "center"),
+             h3("NWS Marine Forecast", align = "center"),
+             selectInput("zone", "Zone:",
+                         c("Synopsis" = "pzz100",
+                           "Discussion" = "afd",
+                           "Cape Flattery to James Island to 10 nm" = "pzz150", 
+                           "James Island to Point Grenville to 10 nm" = "pzz153",
+                           "Point Grenville to Cape Shoalwater to 10 nm" = "pzz156",
+                           "Cape Flattery to James Island 10-60 nm" = "pzz170", 
+                           "James Island to Point Grenville to 10-60 nm" = "pzz173",
+                           "Point Grenville to Cape Shoalwater to 10-60 nm" = "pzz176",
+                           "West Strait" = "pzz130",
+                           "Central Strait" = "pzz131",
+                           "East Strait" = "pzz132",
+                           "Puget Sound & Hood Canal" = "pzz135",
+                           "Admiralty Inlet" = "pzz134", 
+                           "Northern Inland Waters" = "pzz133",
+                           "Grays Harbor Bar" = "pzz110",
+                           "Southern WA/Northern OR Synopsis" = "pzz200",
+                           "Southern OR Synopsis" = "pzz300",
+                           "Columbia River Bar" = "pzz210",
+                           "Cape Shoalwater to Cascade Head to 10 nm" = "pzz250",
+                           "Cascade Head to Florence to 10 nm" = "pzz255",
+                           "Florence to Cape Blanco to 10 nm" = "pzz350",
+                           "Cape Shoalwater to Cascade Head 10-60 nm" = "pzz270",
+                           "Cascade Head to Florence 10-60 nm" = "pzz275",
+                           "Florence to Cape Blanco 10-60 nm" = "pzz370"), selected = NULL),
+             h4(verbatimTextOutput("zone.data"), align = "center", style="text-align: justify")
+           )
   )
+  
 )
 
 
@@ -1119,7 +1164,7 @@ server <- function(input, output, session) {
                                             TRUE ~ W.Wave.Dir)) %>%
           mutate(Mod.Mean.Dir = case_when(Mean.Wave.Dir > 350 ~  0,
                                           TRUE ~ Mean.Wave.Dir)) 
-
+        
         
         mean.ymax <- max(rbind(weather$Wave.Height, weather$Ave.Period), na.rm = TRUE)
         
@@ -1411,6 +1456,14 @@ server <- function(input, output, session) {
           "to", first(ship.weather$Time) %>% format("%H:%M"))
   })
   
+  ############################
+  ### NWS Marine Forecast ####
+  ############################
+  
+  # Synopsis output
+  output$zone.data <- renderText({
+    marcast(input$zone)
+  })
   
 }
 
