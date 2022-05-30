@@ -28,11 +28,11 @@ marcast <- function(zone) {
   if (zone == "afd") {
     link <- "https://tgftp.nws.noaa.gov/data/raw/fx/fxus66.ksew.afd.sew.txt"
     data <- readLines(link)
-    return(paste0(data[grep("Area", data):length(data)], sep = "\n"))
+    return(paste0(data[grep("Area", data):length(data)], sep = "<br/>"))
   } else {
     link <- paste0("https://tgftp.nws.noaa.gov/data/forecasts/marine/coastal/pz/", zone, ".txt")
     data <- readLines(link)
-    return(paste0(data[grep("PZZ", data):length(data)], sep = "\n"))
+    return(paste0(data[grep("PZZ", data):length(data)], sep = "<br/>"))
   }
 }
 
@@ -128,7 +128,12 @@ ui <- tabsetPanel(
                            "Cape Shoalwater to Cascade Head 10-60 nm" = "pzz270",
                            "Cascade Head to Florence 10-60 nm" = "pzz275",
                            "Florence to Cape Blanco 10-60 nm" = "pzz370"), selected = NULL),
-             h4(verbatimTextOutput("zone.data"), align = "center", style="text-align: justify")
+             fluidRow(htmlOutput("zone.data",
+                                 style = "width:100%;
+                                 align:center;
+                                 text-align:justify;
+                                 padding:10px;
+                                 font-size:10px"))
            )
   )
   
@@ -1461,8 +1466,8 @@ server <- function(input, output, session) {
   ############################
   
   # Synopsis output
-  output$zone.data <- renderText({
-    marcast(input$zone)
+  output$zone.data <- renderUI({
+    HTML(marcast(input$zone))
   })
   
 }
