@@ -7,8 +7,9 @@ library(jsonlite)
 library(scales)
 library(data.table)
 
+#### Edit 9/28/22 to add Cape Flattery ####
 #### Edited 5/29/22 to add coastal forecast & discussion ####
-#### Add Cape Flattery, Cape Elizabeth when back on station ####
+#### Add Cape Elizabeth when back on station ####
 
 # Wind rose function to convert wind direction degrees to compass points
 wind.rose <- function(x) {
