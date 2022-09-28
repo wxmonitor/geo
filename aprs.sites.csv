@@ -475,3 +475,4 @@ CHAO3,Charleston,43.351,-124.337,CHAO3,https://www.ndbc.noaa.gov/data/realtime2/
 NWPO3,Newport,44.613,-124.067,NWPO3,https://www.ndbc.noaa.gov/data/5day2/NWPO3_5day,144,CONT,,,,
 46015,"Port Orford, 15 NM W",42.752,-124.844,46015,https://www.ndbc.noaa.gov/data/5day2/46015_5day.txt,144,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46015.spec,24,NBDC
 46243,Clatsop Spit,46.216,-124.128,46243,https://www.ndbc.noaa.gov/data/realtime2/46243.txt,144,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46243.spec,48,NBDC
+46087,Cape Flattery,48.493,-124.727,46087,https://www.ndbc.noaa.gov/data/realtime2/46087.txt,144,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46087.spec,48,NBDC
