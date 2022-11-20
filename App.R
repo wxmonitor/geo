@@ -7,6 +7,7 @@ library(jsonlite)
 library(scales)
 library(data.table)
 
+#### Edit 11/20/22 to reflect new Oregon NWS forecast zones ####
 #### Edit 9/28/22 to add Cape Flattery and New Dungeness ####
 #### Edited 5/29/22 to add coastal forecast & discussion ####
 #### Add Cape Elizabeth when back on station ####
@@ -123,11 +124,13 @@ ui <- tabsetPanel(
                            "Southern WA/Northern OR Synopsis" = "pzz200",
                            "Southern OR Synopsis" = "pzz300",
                            "Columbia River Bar" = "pzz210",
-                           "Cape Shoalwater to Cascade Head to 10 nm" = "pzz250",
-                           "Cascade Head to Florence to 10 nm" = "pzz255",
+                           "Cape Shoalwater to Cape Falcon to 10 nm" = "pzz251",
+                           "Cape Falcon to Cape Foulweather to 10 nm" = "pzz252",
+                           "Cape Foulweather to Florence to 10 nm" = "pzz253",
                            "Florence to Cape Blanco to 10 nm" = "pzz350",
-                           "Cape Shoalwater to Cascade Head 10-60 nm" = "pzz270",
-                           "Cascade Head to Florence 10-60 nm" = "pzz275",
+                           "Cape Shoalwater to Cape Falcon 10-60 nm" = "pzz271",
+                           "Cape Falcon to Cape Foulweather 10-60 nm" = "pzz272",
+                           "Cape Foulweather to Florence 10-60 nm" = "pzz273",
                            "Florence to Cape Blanco 10-60 nm" = "pzz370"), selected = NULL),
              fluidRow(htmlOutput("zone.data",
                                  style = "width:100%;
