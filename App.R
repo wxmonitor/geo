@@ -7,10 +7,11 @@ library(jsonlite)
 library(scales)
 library(data.table)
 
+#### Edit 12/18/22 to add Cape Elizabeth ####
 #### Edit 11/20/22 to reflect new Oregon NWS forecast zones ####
 #### Edit 9/28/22 to add Cape Flattery and New Dungeness ####
 #### Edited 5/29/22 to add coastal forecast & discussion ####
-#### Add Cape Elizabeth when back on station ####
+
 
 # Wind rose function to convert wind direction degrees to compass points
 wind.rose <- function(x) {
