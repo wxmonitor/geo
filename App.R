@@ -7,10 +7,12 @@ library(jsonlite)
 library(scales)
 library(data.table)
 
+#### Edited 5/1/23 to change name ####
 #### Edit 12/18/22 to add Cape Elizabeth ####
 #### Edit 11/20/22 to reflect new Oregon NWS forecast zones ####
 #### Edit 9/28/22 to add Cape Flattery and New Dungeness ####
 #### Edited 5/29/22 to add coastal forecast & discussion ####
+
 
 
 # Wind rose function to convert wind direction degrees to compass points
@@ -45,7 +47,7 @@ Sys.setenv(TZ="America/Los_Angeles")
 ui <- tabsetPanel(
   tabPanel("Station Reports",
            fluidPage(
-             h3("WX Monitor", align = "center"),
+             h3("Tempest Prognosticator", align = "center"),
              h3("Station Reports", align = "center"),
              leafletOutput("map2", width = "100%", height = "400px"),
              h4(textOutput("time.current2"), align = "center"),
@@ -63,7 +65,7 @@ ui <- tabsetPanel(
   ),
   tabPanel("Wave Reports",
            fluidPage(
-             h3("WX Monitor", align = "center"),
+             h3("Tempest Prognosticator", align = "center"),
              h3("Wave Reports", align = "center"),
              leafletOutput("map3", width = "100%", height = "400px"),
              h4(textOutput("time.current3"), align = "center"),
@@ -80,7 +82,7 @@ ui <- tabsetPanel(
   ),
   tabPanel("Ship Reports",
            fluidPage(
-             h3("WX Monitor", align = "center"),
+             h3("Tempest Prognosticator", align = "center"),
              h3("Ship Reports", align = "center"),
              h4(textOutput("ship.recency4"), align = "center"),
              leafletOutput("map4", width = "100%", height = "400px")
@@ -88,7 +90,7 @@ ui <- tabsetPanel(
   ),
   tabPanel("Open Forecast",
            fluidPage(
-             h3("WX Monitor", align = "center"),
+             h3("Tempest Prognosticator", align = "center"),
              h3("48 Hour Forecast", align = "center"),
              leafletOutput("map", width = "100%", height = "400px"),
              h4(textOutput("time.current"), align = "center"),
@@ -104,7 +106,7 @@ ui <- tabsetPanel(
   ),
   tabPanel("NWS Forecast",
            fluidPage(
-             h3("WX Monitor", align = "center"),
+             h3("Tempest Prognosticator", align = "center"),
              h3("NWS Marine Forecast", align = "center"),
              selectInput("zone", "Zone:",
                          c("Synopsis" = "pzz100",
