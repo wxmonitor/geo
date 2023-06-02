@@ -480,3 +480,4 @@ NWPO3,Newport,44.613,-124.067,NWPO3,https://www.ndbc.noaa.gov/data/5day2/NWPO3_5
 46041,Cape Elizabeth,47.352,-124.739,46041,https://www.ndbc.noaa.gov/data/realtime2/46041.txt,144,NBDC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46041.spec,48,NBDC
 WPOW1,West Point,47.662,-122.436,WPOW1,https://www.ndbc.noaa.gov/data/5day2/WPOW1_5day,144,CONT,,,,
 46120,Point Wells,47.761,-122.397,46120,https://www.ndbc.noaa.gov/data/realtime2/46120.txt,144,NBDC,,,,
+30878C,La Push Entrance,47.923801,-124.7413673,30878C,https://api.sofarocean.com/api/wave-data?spotterId=SPOT-30878C&token=5453e10bb638d665d775bdd3fb893d&includeWindData=true&includeBarometerData=true,24,SOFAR,TRUE,https://api.sofarocean.com/api/wave-data?spotterId=SPOT-30878C&token=5453e10bb638d665d775bdd3fb893d&includeWindData=true&includeBarometerData=true,24,SOFAR
