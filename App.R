@@ -247,7 +247,7 @@ server <- function(input, output, session) {
         geom_rect(data = shade, 
                   aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
                   fill = 'light grey', alpha = 0.5) +
-        geom_line(data = hourly.forecast, aes(x = dt, y = pressure), size = 1) +
+        geom_line(data = hourly.forecast, aes(x = dt, y = pressure), linewidth = 1) +
         geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
         theme_bw() +
         labs(title = "**Barometric Pressure**") +
@@ -262,7 +262,7 @@ server <- function(input, output, session) {
         geom_rect(data = shade, 
                   aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
                   fill = 'light grey', alpha = 0.5) +
-        geom_line(data = hourly.forecast, aes(x = dt, y = wind_speed), size = 1) +
+        geom_line(data = hourly.forecast, aes(x = dt, y = wind_speed), linewidth = 1) +
         geom_line(data = hourly.forecast, aes(x = dt, y = wind_gust), color = "#FF0000") +
         theme_bw() +
         labs(
@@ -277,8 +277,8 @@ server <- function(input, output, session) {
         geom_rect(data = shade, 
                   aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
                   fill = 'light grey', alpha = 0.5) +
-        geom_line(data = hourly.forecast, aes(x = dt, y = temp), size = 1) +
-        geom_line(data = hourly.forecast, aes(x = dt, y = dew_point), color = "gray", size = 1) +
+        geom_line(data = hourly.forecast, aes(x = dt, y = temp), linewidth = 1) +
+        geom_line(data = hourly.forecast, aes(x = dt, y = dew_point), color = "gray", linewidth = 1) +
         theme_bw() +
         labs(title = "**Temperature** and <span style='color:#B0B0B0;'>**Dew Point**</span></span>") +
         theme(plot.title = element_markdown()) +
@@ -293,7 +293,7 @@ server <- function(input, output, session) {
           geom_rect(data = shade, 
                     aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
                     fill = 'light grey', alpha = 0.5) +
-          geom_line(data = hourly.forecast, aes(x = dt, y = pop), size = 1) +
+          geom_line(data = hourly.forecast, aes(x = dt, y = pop), linewidth = 1) +
           geom_col(data = hourly.forecast, aes(x = dt, y = rain.1h/5), color = "darkgrey", fill = "#28d0eb") +
           geom_text(data = hourly.forecast, aes(x = dt, y = rain.1h/5, label = rain.1h), size = 2, vjust = -0.5) +
           theme_bw() +
@@ -311,7 +311,7 @@ server <- function(input, output, session) {
           geom_rect(data = shade, 
                     aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
                     fill = 'light grey', alpha = 0.5) +
-          geom_line(data = hourly.forecast, aes(x = dt, y = pop), size = 1) +
+          geom_line(data = hourly.forecast, aes(x = dt, y = pop), linewidth = 1) +
           theme_bw() +
           labs(
             title = "**Chance of Rain** and <span style='color:#28d0eb;'>**Accumulation**</span></span> (mm)") +
@@ -453,7 +453,7 @@ server <- function(input, output, session) {
         
         # Barometer plot
         plot_rct$bar.plot2 <- ggplot() + 
-          geom_line(data = pressure.table, aes(x = Time, y = `Pressure (mb)`), size = 1) +
+          geom_line(data = pressure.table, aes(x = Time, y = `Pressure (mb)`), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
           theme_bw() +
           labs(title = "**Barometric Pressure**") +
@@ -484,7 +484,7 @@ server <- function(input, output, session) {
           
           # Wind + gust plot
           plot_rct$weather.plot2 <- ggplot() + 
-            geom_line(data = weather.table, aes(x = Time, y = `Wind Speed`), color = "black", size = 1) +
+            geom_line(data = weather.table, aes(x = Time, y = `Wind Speed`), color = "black", linewidth = 1) +
             geom_point(data = gust.table, aes(x = Time, y = `Wind Speed`), color = "#FF0000") +
             theme_bw() +
             labs(
@@ -500,7 +500,7 @@ server <- function(input, output, session) {
           
           # Wind only plot
           plot_rct$weather.plot2 <- ggplot() +
-            geom_line(data = weather.table, aes(x = Time, y = `Wind Speed`), size = 1) +
+            geom_line(data = weather.table, aes(x = Time, y = `Wind Speed`), linewidth = 1) +
             theme_bw() +
             labs(
               title = "**Wind Speed** and <span style='color:#FF0000;'>**Gust**</span></span>") +
@@ -524,9 +524,9 @@ server <- function(input, output, session) {
           
         }) 
         
-      } else if (type == "NBDC") {
+      } else if (type == "NDBC") {
         
-        # NBDC stations 
+        # NDBC stations 
         # Call API 
         weather <- fread(wind.link, 
                          skip = 2,
@@ -568,7 +568,7 @@ server <- function(input, output, session) {
         
         # Barometer plot
         plot_rct$bar.plot2 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Pressure), size = 1) +
+          geom_line(data = weather, aes(x = Time, y = Pressure), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
           theme_bw() +
           labs(title = "**Barometric Pressure**") +
@@ -605,7 +605,7 @@ server <- function(input, output, session) {
         
         # Wind plot
         plot_rct$weather.plot2 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Wind.Speed), size = 1) +
+          geom_line(data = weather, aes(x = Time, y = Wind.Speed), linewidth = 1) +
           geom_line(data = weather, aes(x = Time, y = Gust), color = "#FF0000") +
           theme_bw() +
           labs(
@@ -684,7 +684,7 @@ server <- function(input, output, session) {
         
         # Pressure plot
         plot_rct$bar.plot2 <- ggplot() + 
-          geom_line(data = bar, aes(x = Time, y = Pressure), size = 1) +
+          geom_line(data = bar, aes(x = Time, y = Pressure), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
           theme_bw() +
           labs(title = "**Barometric Pressure**") +
@@ -727,7 +727,7 @@ server <- function(input, output, session) {
         
         # Wind plot
         plot_rct$weather.plot2 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Wind.Speed), size = 1) +
+          geom_line(data = weather, aes(x = Time, y = Wind.Speed), linewidth = 1) +
           geom_point(data = weather, aes(x = Time, y = Gust), color = "#FF0000") +
           theme_bw() +
           labs(
@@ -789,7 +789,7 @@ server <- function(input, output, session) {
         
         # Barometer plot
         plot_rct$bar.plot2 <- ggplot() + 
-          geom_line(data = baro.table, aes(x = Time, y = Pressure), size = 1) +
+          geom_line(data = baro.table, aes(x = Time, y = Pressure), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
           theme_bw() +
           labs(title = "**Barometric Pressure**") +
@@ -801,7 +801,7 @@ server <- function(input, output, session) {
         
         # Wind plot
         plot_rct$weather.plot2 <- ggplot() + 
-          geom_line(data = weather.table, aes(x = Time, y = Wind.Speed), size = 1) +
+          geom_line(data = weather.table, aes(x = Time, y = Wind.Speed), linewidth = 1) +
           theme_bw() +
           labs(
             title = "**Wind Speed**") +
@@ -895,7 +895,7 @@ server <- function(input, output, session) {
         
         # Barometric pressure plot
         plot_rct$bar.plot2 <- ggplot() + 
-          geom_line(data = aprs, aes(x = dt, y = pressure), size = 1) +
+          geom_line(data = aprs, aes(x = dt, y = pressure), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
           theme_bw() +
           labs(title = "**Barometric Pressure**") +
@@ -906,7 +906,7 @@ server <- function(input, output, session) {
         
         # Wind speed plot
         plot_rct$weather.plot2 <- ggplot() +
-          geom_line(data = aprs, aes(x = dt, y = wind_speed), size = 1) +
+          geom_line(data = aprs, aes(x = dt, y = wind_speed), linewidth = 1) +
           theme_bw() +
           labs(
             title = "**Wind Speed**") +
@@ -1064,9 +1064,9 @@ server <- function(input, output, session) {
         
         # Wave height and period plot
         plot_rct$wave.plot3 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Wave.Height), size = 0.5) +
+          geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 0.5) +
           geom_line(data = weather[!is.na(Dom.Period)], aes(x = Time, y = Dom.Period), 
-                    size = 0.5, color = "#FF0000") +
+                    linewidth = 0.5, color = "#FF0000") +
           geom_text(data = weather %>% 
                       filter(!is.na(Mean.Wave.Dir)),
                     aes(x = Time, y = Wave.Height, angle=-Mean.Wave.Dir+270), label="→", size = 8) +
@@ -1159,7 +1159,7 @@ server <- function(input, output, session) {
         
         # Wave height and period plot
         plot_rct$wave.plot3 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Wave.Height), size = 1) +
+          geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 1) +
           geom_line(data = weather[!is.na(Dom.Period)], aes(x = Time, y = Dom.Period), color = "#FF0000") +
           theme_bw() +
           labs(
@@ -1215,9 +1215,9 @@ server <- function(input, output, session) {
         output$wave.dir.plot3 <- renderPlot({
         })
         
-      } else if (wave.type == "NBDCIN") {
+      } else if (wave.type == "NDBCIN") {
         
-        #NBDC Inside stations
+        #NDBC Inside stations
         # Call API 
         weather <- fread(wave.link, 
                          skip = 2,
@@ -1256,9 +1256,9 @@ server <- function(input, output, session) {
         
         # Mean wave height, direction, and period plot
         plot_rct$wave.plot3 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Wave.Height), size = 0.5) +
+          geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 0.5) +
           geom_line(data = weather[!is.na(Ave.Period)], aes(x = Time, y = Ave.Period),
-                    color = "#FF0000", size = 0.5) +
+                    color = "#FF0000", linewidth = 0.5) +
           geom_text(data = weather %>% 
                       filter(!is.na(Mean.Wave.Dir)),
                     aes(x = Time, y = Wave.Height, angle=-Mean.Wave.Dir+270), label="→", size = 8) +
@@ -1296,9 +1296,9 @@ server <- function(input, output, session) {
         
         # Swell height, direction, and period plot
         plot_rct$swell.plot3 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Swell.Height), size = 0.5) +
+          geom_line(data = weather, aes(x = Time, y = Swell.Height), linewidth = 0.5) +
           geom_line(data = weather[!is.na(Swell.Period)], aes(x = Time, y = Swell.Period), 
-                    size = 0.5, color = "#FF0000") +
+                    linewidth = 0.5, color = "#FF0000") +
           geom_text(data = weather %>% 
                       filter(!is.na(Swell.Dir)),
                     aes(x = Time, y = Swell.Height, angle=-Swell.Dir+270), label="→", size = 8) +
@@ -1315,9 +1315,9 @@ server <- function(input, output, session) {
         
         # Wind wave height, direction, and period plot
         plot_rct$wind.wave.plot3 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = W.Wave.Height), size = 0.5) +
+          geom_line(data = weather, aes(x = Time, y = W.Wave.Height), linewidth = 0.5) +
           geom_line(data = weather[!is.na(W.Wave.Period)], aes(x = Time, y = W.Wave.Period), 
-                    size = 0.5, color = "#FF0000") +
+                    linewidth = 0.5, color = "#FF0000") +
           geom_text(data = weather %>% 
                       filter(!is.na(W.Wave.Dir)),
                     aes(x = Time, y = W.Wave.Height, angle=-W.Wave.Dir+270), label="→", size = 8) +
@@ -1485,9 +1485,9 @@ server <- function(input, output, session) {
         
         # Wave height and period plot
         plot_rct$wave.plot3 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Wave.Height), size = 0.5) +
+          geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 0.5) +
           geom_line(data = weather, aes(x = Time, y = Mean.Period), 
-                    size = 0.5, color = "#FF0000") +
+                    linewidth = 0.5, color = "#FF0000") +
           geom_text(data = weather %>% 
                       filter(!is.na(Mean.Wave.Dir)),
                     aes(x = Time, y = Wave.Height, angle=-Mean.Wave.Dir+270), label="→", size = 8) +
@@ -1552,7 +1552,7 @@ server <- function(input, output, session) {
         
       } else {
         
-        #NBDC stations
+        #NDBC stations
         # Call API 
         dom.weather <- fread(wind.link, 
                              skip = 2,
@@ -1609,9 +1609,9 @@ server <- function(input, output, session) {
         
         # Mean wave height, direction, and period plot
         plot_rct$wave.plot3 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Wave.Height), size = 0.5) +
+          geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 0.5) +
           geom_line(data = weather[!is.na(Ave.Period)], aes(x = Time, y = Ave.Period),
-                    color = "#FF0000", size = 0.5) +
+                    color = "#FF0000", linewidth = 0.5) +
           geom_text(data = weather %>% 
                       filter(!is.na(Mean.Wave.Dir)),
                     aes(x = Time, y = Wave.Height, angle=-Mean.Wave.Dir+270), label="→", size = 8) +
@@ -1664,9 +1664,9 @@ server <- function(input, output, session) {
         
         # Swell height, direction, and period plot
         plot_rct$swell.plot3 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = Swell.Height), size = 0.5) +
+          geom_line(data = weather, aes(x = Time, y = Swell.Height), linewidth = 0.5) +
           geom_line(data = weather[!is.na(Swell.Period)], aes(x = Time, y = Swell.Period), 
-                    size = 0.5, color = "#FF0000") +
+                    linewidth = 0.5, color = "#FF0000") +
           geom_text(data = weather %>% 
                       filter(!is.na(Swell.Dir)),
                     aes(x = Time, y = Swell.Height, angle=-Swell.Dir+270), label="→", size = 8) +
@@ -1683,9 +1683,9 @@ server <- function(input, output, session) {
         
         # Wind wave height, direction, and period plot
         plot_rct$wind.wave.plot3 <- ggplot() + 
-          geom_line(data = weather, aes(x = Time, y = W.Wave.Height), size = 0.5) +
+          geom_line(data = weather, aes(x = Time, y = W.Wave.Height), linewidth = 0.5) +
           geom_line(data = weather[!is.na(W.Wave.Period)], aes(x = Time, y = W.Wave.Period), 
-                    size = 0.5, color = "#FF0000") +
+                    linewidth = 0.5, color = "#FF0000") +
           geom_text(data = weather %>% 
                       filter(!is.na(W.Wave.Dir)),
                     aes(x = Time, y = W.Wave.Height, angle=-W.Wave.Dir+270), label="→", size = 8) +
