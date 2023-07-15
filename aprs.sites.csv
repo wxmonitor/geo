@@ -32,8 +32,9 @@ WPOW1,West Point,47.662,-122.436,WPOW1,https://www.ndbc.noaa.gov/data/5day2/WPOW
 30878C,La Push Entrance,47.923801,-124.7413673,30878C,https://api.sofarocean.com/api/wave-data?spotterId=SPOT-30878C&token=5453e10bb638d665d775bdd3fb893d&includeWindData=true&includeBarometerData=true,24,SOFAR,TRUE,https://api.sofarocean.com/api/wave-data?spotterId=SPOT-30878C&token=5453e10bb638d665d775bdd3fb893d&includeWindData=true&includeBarometerData=true,24,SOFAR
 SISW1,Smith Island,48.321,-122.831,SISW1,https://www.ndbc.noaa.gov/data/5day2/SISW1_5day.txt,144,NDBC,,,,
 FRDW1,Friday Harbor,48.545,-123.012,FRDW1,https://www.ndbc.noaa.gov/data/realtime2/FRDW1.txt,240,NDBC,,,,
-CPMW1,Cherry Point South,48.860,-122.756,CPMW1,https://www.ndbc.noaa.gov/data/realtime2/CPMW1.txt,240,NDBC,,,,
+CPMW1,Cherry Point South,48.86,-122.756,CPMW1,https://www.ndbc.noaa.gov/data/realtime2/CPMW1.txt,240,NDBC,,,,
 CPNW1,Cherry Point North,48.863,-122.758,CPNW1,https://www.ndbc.noaa.gov/data/realtime2/CPNW1.txt,240,NDBC,,,,
-46303,Southern Georgia Strait,49.020,-123.43,46303,https://www.ndbc.noaa.gov/data/realtime2/46303.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46303.txt,24,CA
+46303,Southern Georgia Strait,49.02,-123.43,46303,https://www.ndbc.noaa.gov/data/realtime2/46303.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46303.txt,24,CA
 46123,Twanoh,47.375,-123.008,46123,https://www.ndbc.noaa.gov/data/realtime2/46123.txt,144,NDBC,,,,
 TCMW1,Tacoma,47.276,-122.418,TCMW1,https://www.ndbc.noaa.gov/data/realtime2/TCMW1.txt,240,NDBC,,,,
+AA0RD-13,New Dungeness Lighthouse,48.18168,-123.10979,AV721,,,APRS,,,,
