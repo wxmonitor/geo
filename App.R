@@ -7,6 +7,7 @@ library(jsonlite)
 library(scales)
 library(data.table)
 
+#### Edited 7/15/23 to fix mutate() bug for SOFAR wind data ####
 #### Edited 5/1/23 to change name ####
 #### Edit 12/18/22 to add Cape Elizabeth ####
 #### Edit 11/20/22 to reflect new Oregon NWS forecast zones ####
@@ -766,8 +767,8 @@ server <- function(input, output, session) {
             dst(Time[1]) == TRUE ~ Time - 25200,
             dst(Time[1]) == FALSE ~ Time - 28800)) %>%
           mutate(Wind.Speed = Wind.Speed * 1.94384) %>%
-          mutate(Mod.Dir = case_when(Wind.Dir > 350 ~  0,
-                                     TRUE ~ Wind.Dir))
+          mutate(Mod.Dir = case_when(as.double(Wind.Dir) > 350 ~  0,
+                                     TRUE ~ as.double(Wind.Dir)))
         
         # Strip and format pressure data
         baro.table <- data.frame(weather.page$data$barometerData) %>%
