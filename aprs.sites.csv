@@ -1,40 +1,40 @@
-callsign,name,lat,lon,site,wind.link,wind.n,type,wave,wave.link,wave.n,wave.type
-KNOW,Port Angeles,48.13333,-123.4,KNOW,,,MESO,,,,
-PTWW1,Port Townsend,48.111,-122.76,PTWW1,https://www.ndbc.noaa.gov/data/realtime2/PTWW1.txt,240,NDBC,,,,
-NEAW1,Neah Bay,48.367,-124.614,NEAW1,https://www.ndbc.noaa.gov/data/realtime2/NEAW1.txt,240,NDBC,,,,
-LAPW1,La Push,47.913,-124.637,LAPW1,https://www.ndbc.noaa.gov/data/realtime2/LAPW1.txt,240,NDBC,,,,
-46099,Westport Shelf,46.986,-124.566,46099,https://www.ndbc.noaa.gov/data/realtime2/46099.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46099.txt,144,OOI
-46100,Westport Offshore,46.851,-124.972,46100,https://www.ndbc.noaa.gov/data/realtime2/46100.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46100.txt,144,OOI
-DESW1,Destruction Island,47.675,-124.485,DESW1,https://www.ndbc.noaa.gov/data/5day2/DESW1_5day,144,CONT,,,,
-46267,Angeles Point,48.173,-123.607,46267,https://www.ndbc.noaa.gov/data/realtime2/46267.txt,48,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46267.spec,48,NDBC
-46248,Astoria Canyon,46.133,-124.644,46248,https://www.ndbc.noaa.gov/data/realtime2/46248.txt,48,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46248.spec,48,NDBC
-46029,"Columbia River Bar, 20 NM W",46.163,-124.487,46029,https://www.ndbc.noaa.gov/data/5day2/46029_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46029.spec,24,NDBC
-46089,Tillamook,45.936,-125.793,46089,https://www.ndbc.noaa.gov/data/5day2/46089_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46089.spec,24,NDBC
-46005,"Aberdeen, 300 NM W",46.134,-131.079,46005,https://www.ndbc.noaa.gov/data/5day2/46005_5day.txt,144,NDBC,,,,
-46036,South Nomad,48.36,-133.94,46036,https://www.ndbc.noaa.gov/data/realtime2/46036.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46036.txt,24,CA
-46206,La Perouse Bank,48.84,-126,46206,https://www.ndbc.noaa.gov/data/realtime2/46206.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46206.txt,24,CA
-46132,South Brooks,49.78,-127.89,46132,https://www.ndbc.noaa.gov/data/realtime2/46132.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46132.txt,24,CA
-46050,Stonewall Bank,44.669,-124.546,46050,https://www.ndbc.noaa.gov/data/5day2/46050_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46050.spec,24,NDBC
-PORO3,Port Orford,42.739,-124.498,PORO3,https://www.ndbc.noaa.gov/data/realtime2/PORO3.txt,240,NDBC,,,,
-CHAO3,Charleston,43.351,-124.337,CHAO3,https://www.ndbc.noaa.gov/data/realtime2/CHAO3.txt,240,NDBC,,,,
-46098,Waldport Offshore,44.381,-124.956,46098,https://www.ndbc.noaa.gov/data/realtime2/46098.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46098.txt,144,OOI
-46097,Newport Shelf,44.639,-124.304,46097,https://www.ndbc.noaa.gov/data/realtime2/46097.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46097.txt,144,OOI
-46229,Umpqua Offshore,43.772,-124.549,46229,https://www.ndbc.noaa.gov/data/realtime2/46229.txt,48,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46229.spec,48,NDBC
-46002,"Coos Bay, 275 NM W",42.662,-130.507,46002,https://www.ndbc.noaa.gov/data/5day2/46002_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46002.spec,24,NDBC
-NWPO3,Newport,44.613,-124.067,NWPO3,https://www.ndbc.noaa.gov/data/5day2/NWPO3_5day,144,CONT,,,,
-46015,"Port Orford, 15 NM W",42.752,-124.844,46015,https://www.ndbc.noaa.gov/data/5day2/46015_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46015.spec,24,NDBC
-46243,Clatsop Spit,46.216,-124.128,46243,https://www.ndbc.noaa.gov/data/realtime2/46243.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46243.spec,48,NDBC
-46087,Cape Flattery,48.493,-124.727,46087,https://www.ndbc.noaa.gov/data/realtime2/46087.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46087.spec,48,NDBC
-46088,New Dungeness,48.332,-123.179,46088,https://www.ndbc.noaa.gov/data/5day2/46088_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46088.spec,48,NDBCIN
-46041,Cape Elizabeth,47.352,-124.739,46041,https://www.ndbc.noaa.gov/data/realtime2/46041.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46041.spec,48,NDBC
-WPOW1,West Point,47.662,-122.436,WPOW1,https://www.ndbc.noaa.gov/data/5day2/WPOW1_5day,144,CONT,,,,
-46120,Point Wells,47.761,-122.397,46120,https://www.ndbc.noaa.gov/data/realtime2/46120.txt,144,NDBC,,,,
-30878C,La Push Entrance,47.923801,-124.7413673,30878C,https://api.sofarocean.com/api/wave-data?spotterId=SPOT-30878C&token=5453e10bb638d665d775bdd3fb893d&includeWindData=true&includeBarometerData=true,24,SOFAR,TRUE,https://api.sofarocean.com/api/wave-data?spotterId=SPOT-30878C&token=5453e10bb638d665d775bdd3fb893d&includeWindData=true&includeBarometerData=true,24,SOFAR
-SISW1,Smith Island,48.321,-122.831,SISW1,https://www.ndbc.noaa.gov/data/5day2/SISW1_5day.txt,144,NDBC,,,,
-FRDW1,Friday Harbor,48.545,-123.012,FRDW1,https://www.ndbc.noaa.gov/data/realtime2/FRDW1.txt,240,NDBC,,,,
-CPMW1,Cherry Point South,48.86,-122.756,CPMW1,https://www.ndbc.noaa.gov/data/realtime2/CPMW1.txt,240,NDBC,,,,
-CPNW1,Cherry Point North,48.863,-122.758,CPNW1,https://www.ndbc.noaa.gov/data/realtime2/CPNW1.txt,240,NDBC,,,,
-46303,Southern Georgia Strait,49.02,-123.43,46303,https://www.ndbc.noaa.gov/data/realtime2/46303.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46303.txt,24,CA
-46123,Twanoh,47.375,-123.008,46123,https://www.ndbc.noaa.gov/data/realtime2/46123.txt,144,NDBC,,,,
-TCMW1,Tacoma,47.276,-122.418,TCMW1,https://www.ndbc.noaa.gov/data/realtime2/TCMW1.txt,240,NDBC,,,,
-AA0RD-13,New Dungeness Lighthouse,48.18168,-123.10979,AV721,,,APRS,,,,
+callsign,name,lat,lon,site,wind.link,wind.n,type,wave,wave.link,wave.n,wave.type,tide,tide.station
+KNOW,Port Angeles,48.13333,-123.4,KNOW,,,MESO,,,,,,
+PTWW1,Port Townsend,48.111,-122.76,PTWW1,https://www.ndbc.noaa.gov/data/realtime2/PTWW1.txt,240,NDBC,,,,,,
+NEAW1,Neah Bay,48.367,-124.614,NEAW1,https://www.ndbc.noaa.gov/data/realtime2/NEAW1.txt,240,NDBC,,,,,,
+LAPW1,La Push,47.913,-124.637,LAPW1,https://www.ndbc.noaa.gov/data/realtime2/LAPW1.txt,240,NDBC,,,,,TRUE,9442396
+46099,Westport Shelf,46.986,-124.566,46099,https://www.ndbc.noaa.gov/data/realtime2/46099.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46099.txt,144,OOI,,
+46100,Westport Offshore,46.851,-124.972,46100,https://www.ndbc.noaa.gov/data/realtime2/46100.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46100.txt,144,OOI,,
+DESW1,Destruction Island,47.675,-124.485,DESW1,https://www.ndbc.noaa.gov/data/5day2/DESW1_5day,144,CONT,,,,,,
+46267,Angeles Point,48.173,-123.607,46267,https://www.ndbc.noaa.gov/data/realtime2/46267.txt,48,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46267.spec,48,NDBC,,
+46248,Astoria Canyon,46.133,-124.644,46248,https://www.ndbc.noaa.gov/data/realtime2/46248.txt,48,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46248.spec,48,NDBC,,
+46029,"Columbia River Bar, 20 NM W",46.163,-124.487,46029,https://www.ndbc.noaa.gov/data/5day2/46029_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46029.spec,24,NDBC,,
+46089,Tillamook,45.936,-125.793,46089,https://www.ndbc.noaa.gov/data/5day2/46089_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46089.spec,24,NDBC,,
+46005,"Aberdeen, 300 NM W",46.134,-131.079,46005,https://www.ndbc.noaa.gov/data/5day2/46005_5day.txt,144,NDBC,,,,,,
+46036,South Nomad,48.36,-133.94,46036,https://www.ndbc.noaa.gov/data/realtime2/46036.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46036.txt,24,CA,,
+46206,La Perouse Bank,48.84,-126,46206,https://www.ndbc.noaa.gov/data/realtime2/46206.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46206.txt,24,CA,,
+46132,South Brooks,49.78,-127.89,46132,https://www.ndbc.noaa.gov/data/realtime2/46132.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46132.txt,24,CA,,
+46050,Stonewall Bank,44.669,-124.546,46050,https://www.ndbc.noaa.gov/data/5day2/46050_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46050.spec,24,NDBC,,
+PORO3,Port Orford,42.739,-124.498,PORO3,https://www.ndbc.noaa.gov/data/realtime2/PORO3.txt,240,NDBC,,,,,,
+CHAO3,Charleston,43.351,-124.337,CHAO3,https://www.ndbc.noaa.gov/data/realtime2/CHAO3.txt,240,NDBC,,,,,,
+46098,Waldport Offshore,44.381,-124.956,46098,https://www.ndbc.noaa.gov/data/realtime2/46098.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46098.txt,144,OOI,,
+46097,Newport Shelf,44.639,-124.304,46097,https://www.ndbc.noaa.gov/data/realtime2/46097.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46097.txt,144,OOI,,
+46229,Umpqua Offshore,43.772,-124.549,46229,https://www.ndbc.noaa.gov/data/realtime2/46229.txt,48,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46229.spec,48,NDBC,,
+46002,"Coos Bay, 275 NM W",42.662,-130.507,46002,https://www.ndbc.noaa.gov/data/5day2/46002_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46002.spec,24,NDBC,,
+NWPO3,Newport,44.613,-124.067,NWPO3,https://www.ndbc.noaa.gov/data/5day2/NWPO3_5day,144,CONT,,,,,,
+46015,"Port Orford, 15 NM W",42.752,-124.844,46015,https://www.ndbc.noaa.gov/data/5day2/46015_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46015.spec,24,NDBC,,
+46243,Clatsop Spit,46.216,-124.128,46243,https://www.ndbc.noaa.gov/data/realtime2/46243.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46243.spec,48,NDBC,,
+46087,Cape Flattery,48.493,-124.727,46087,https://www.ndbc.noaa.gov/data/realtime2/46087.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46087.spec,48,NDBC,,
+46088,New Dungeness,48.332,-123.179,46088,https://www.ndbc.noaa.gov/data/5day2/46088_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46088.spec,48,NDBCIN,,
+46041,Cape Elizabeth,47.352,-124.739,46041,https://www.ndbc.noaa.gov/data/realtime2/46041.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46041.spec,48,NDBC,,
+WPOW1,West Point,47.662,-122.436,WPOW1,https://www.ndbc.noaa.gov/data/5day2/WPOW1_5day,144,CONT,,,,,,
+46120,Point Wells,47.761,-122.397,46120,https://www.ndbc.noaa.gov/data/realtime2/46120.txt,144,NDBC,,,,,,
+30878C,La Push Entrance,47.923801,-124.7413673,30878C,https://api.sofarocean.com/api/wave-data?spotterId=SPOT-30878C&token=5453e10bb638d665d775bdd3fb893d&includeWindData=true&includeBarometerData=true,24,SOFAR,TRUE,https://api.sofarocean.com/api/wave-data?spotterId=SPOT-30878C&token=5453e10bb638d665d775bdd3fb893d&includeWindData=true&includeBarometerData=true,24,SOFAR,,
+SISW1,Smith Island,48.321,-122.831,SISW1,https://www.ndbc.noaa.gov/data/5day2/SISW1_5day.txt,144,NDBC,,,,,,
+FRDW1,Friday Harbor,48.545,-123.012,FRDW1,https://www.ndbc.noaa.gov/data/realtime2/FRDW1.txt,240,NDBC,,,,,,
+CPMW1,Cherry Point South,48.86,-122.756,CPMW1,https://www.ndbc.noaa.gov/data/realtime2/CPMW1.txt,240,NDBC,,,,,,
+CPNW1,Cherry Point North,48.863,-122.758,CPNW1,https://www.ndbc.noaa.gov/data/realtime2/CPNW1.txt,240,NDBC,,,,,,
+46303,Southern Georgia Strait,49.02,-123.43,46303,https://www.ndbc.noaa.gov/data/realtime2/46303.txt,24,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46303.txt,24,CA,,
+46123,Twanoh,47.375,-123.008,46123,https://www.ndbc.noaa.gov/data/realtime2/46123.txt,144,NDBC,,,,,,
+TCMW1,Tacoma,47.276,-122.418,TCMW1,https://www.ndbc.noaa.gov/data/realtime2/TCMW1.txt,240,NDBC,,,,,,
+AA0RD-13,New Dungeness Lighthouse,48.18168,-123.10979,AV721,,,APRS,,,,,,
