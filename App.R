@@ -7,6 +7,7 @@ library(jsonlite)
 library(scales)
 library(data.table)
 
+#### Edited 8/1/23 to add tidal stations
 #### Edited 7/15/23 to fix mutate() bug for SOFAR wind data ####
 #### Edited 5/1/23 to change name ####
 #### Edit 12/18/22 to add Cape Elizabeth ####
@@ -140,6 +141,17 @@ ui <- tabsetPanel(
                                  text-align:justify;
                                  padding:10px;
                                  font-size:10px"))
+           )
+  ),
+  
+  tabPanel("Tide Predictions",
+           fluidPage(
+             h3("WX Monitor", align = "center"),
+             h3("Tide Predictions", align = "center"),
+             leafletOutput("map2", width = "100%", height = "400px"),
+             h4(textOutput("time.current5"), align = "center"),
+             h4(textOutput("tide.table"), align = 'center'),
+             plotOutput(outputId = "tide.plot", width = "100%", height = "400px")
            )
   )
   
@@ -1903,6 +1915,86 @@ server <- function(input, output, session) {
   # Synopsis output
   output$zone.data <- renderUI({
     HTML(marcast(input$zone))
+  })
+  
+  
+  ########################
+  ### Tide reports ####
+  ########################
+  
+  tide.sites <- aprs.sites %>%
+    filter(tide == "TRUE")
+  
+  output$map5 <- renderLeaflet({
+    leaflet(options = leafletOptions(
+      attributionControl=FALSE)) %>% 
+      addTiles() %>%
+      setView(lat = 47.77920969878382, lng = -123.61182070598635 , zoom=7) %>%
+      addProviderTiles(providers$Esri.NatGeoWorldMap) %>%
+      addCircleMarkers(tide$lon, tide$lat,
+                       layerId = tide.sites$site,
+                       popup = tide.sites$name, 
+                       color = "#575757",
+                       radius = 8,
+                       weight = 3)
+  })
+  
+  plot_rct <- reactiveValues()
+  
+  observeEvent(
+    input$map5_marker_click, 
+    { 
+      click <- input$map5_marker_click
+      site <- click$id
+      name <- tide.sites$name[tide.sites$site == site]
+      plot_rct$site <- paste(name, site)
+      clat <- click$lat
+      clng <- click$lng
+      
+      leafletProxy('map5')
+      
+      date.today <- format(Sys.Date(), "%Y%m%d")
+      tide.link <- paste0("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=",
+                          date.today,
+                          "&range=48&station=",
+                          site,
+                          "&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=h&units=english&format=csv")
+      
+      hilo.link <- paste0("https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?begin_date=",
+                          date.today,
+                          "&range=48&station=",
+                          site,
+                          "&product=predictions&datum=MLLW&time_zone=lst_ldt&interval=hilo&units=english&format=csv")
+      
+      tide.data <- read.csv(tide.link)
+      tide.data <- tide.data %>%
+        mutate(Date.Time = as.POSIXct(Date.Time, format = "%Y-%m-%d %H:%M"))
+      
+      hilo.data <- read.csv(hilo.link,
+                            col.names = c("Time", "Height", "H/L"))
+      hilo.data <- hilo.data %>%
+        mutate(Date.Time = as.POSIXct(Date.Time, format = "%Y-%m-%d %H:%M"))
+      
+      plot_rct$tide.plot <- ggplot() + 
+        geom_line(data = tide.data, aes(x = Date.Time, y = Prediction), linewidth = 1) +
+        geom_vline(xintercept = Sys.time()) +
+        theme_bw() +
+        labs(title = "**Tidal Height**") +
+        theme(plot.title = element_markdown()) +
+        ylab("Feet") +
+        xlab("") +
+        scale_x_datetime(limits = c(min(tide.data$Date.Time), max(tide.data$Date.Time)), expand = c(0, 0))
+  
+      # Current time label output
+      output$time.current5 <- renderText({
+        paste("",format(Sys.time(), "%a %m-%d %H:%M"))
+      })
+      
+      # Tide table output
+      output$time.table <- renderText({
+        hilo.data
+      })
+      
   })
   
 }
