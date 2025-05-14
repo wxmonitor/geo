@@ -6,6 +6,7 @@ library(leaflet)
 library(jsonlite)
 library(scales)
 library(data.table)
+library(rvest)
 
 #### Edited 5/14/25 to fix deprecation of MESOWEST system
 #### Edited 5/13/25 to reflect new backyard buoy stations, remove tidal tab, and fix pipe error in wave syntax ####
