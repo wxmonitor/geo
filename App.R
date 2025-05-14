@@ -7,13 +7,14 @@ library(jsonlite)
 library(scales)
 library(data.table)
 
+#### Edited 5/14/25 to fix deprecation of MESOWEST system
 #### Edited 5/13/25 to reflect new backyard buoy stations, remove tidal tab, and fix pipe error in wave syntax ####
 #### Edited 8/1/23 to add tidal stations
 #### Edited 7/15/23 to fix mutate() bug for SOFAR wind data ####
 #### Edited 5/1/23 to change name ####
-#### Edit 12/18/22 to add Cape Elizabeth ####
-#### Edit 11/20/22 to reflect new Oregon NWS forecast zones ####
-#### Edit 9/28/22 to add Cape Flattery and New Dungeness ####
+#### Edited 12/18/22 to add Cape Elizabeth ####
+#### Edited 11/20/22 to reflect new Oregon NWS forecast zones ####
+#### Edited 9/28/22 to add Cape Flattery and New Dungeness ####
 #### Edited 5/29/22 to add coastal forecast & discussion ####
 
 
@@ -424,51 +425,69 @@ server <- function(input, output, session) {
       if (type == "MESO"){
         
         # Ediz Hook CG station
-        # Call API and decode JSON
-        url <- "https://api.synopticdata.com/v2/stations/timeseries?stid=KNOW&obtimezone=local&recent=1440&vars=wind_speed,wind_gust,wind_direction,sea_level_pressure&units=english&token=652e4bd32bbf4621b835895f8c769bb6"
-        total.page <- fromJSON(url, flatten = TRUE)
+        url <- "https://mesowest.utah.edu/cgi-bin/droman/meso_table_mesodyn.cgi?stn=KNOW&unit=0&time=LOCAL&year1=&month1=&day1=0&hour1=00&hours=24&past=0&order=1"
         
-        # Strip and format data
-        weather.table <- data.frame(total.page[["STATION"]]$OBSERVATIONS.date_time, total.page[["STATION"]]$OBSERVATIONS.wind_speed_set_1) %>%
-          setNames(c("Time", "Wind Speed")) %>%
-          mutate(Time = as.POSIXct(Time, format = "%Y-%m-%dT%H:%M:%S%z"))
+        # Scrape most recent reading
+        last_reading <- url %>%
+          read_html() %>%
+          html_elements('font[color="#730000"]') %>%
+          html_text() %>%
+          .[2] %>%
+          str_replace("Most Recent Weather Conditions at: ", "") %>%
+          str_replace(" PDT", "") %>%
+          as.POSIXct(format = "%m/%d/%Y %H:%M")
         
-        dir.table <- data.frame(total.page[["STATION"]]$OBSERVATIONS.date_time, total.page[["STATION"]]$OBSERVATIONS.wind_direction_set_1) %>%
-          setNames(c("Time", "Wind Direction")) %>%
-          mutate(Time = as.POSIXct(Time, format = "%Y-%m-%dT%H:%M:%S%z")) %>%
-          mutate(`Mod Direction` = case_when(`Wind Direction` > 352 && `Wind Direction` < 356 ~ 352,
-                                             `Wind Direction` >= 356 && `Wind Direction` <= 360 ~ 0,
-                                             TRUE ~ `Wind Direction`))
+        # Scrape and clean table data 
+        weather.page <- url %>%
+          read_html() %>%
+          html_nodes("table") %>%
+          .[3] %>%
+          html_table(fill = T) %>%
+          .[[1]] %>%
+          select(1, 6, 7, 8, 9) %>%
+          setNames(c("Time", "Wind.Speed", "Wind.Gust", "Wind.Direction", "Pressure")) %>%
+          mutate(Time = as.POSIXct(Time, format = "%H:%M")) %>%
+          mutate(Wind.Speed = Wind.Speed * 0.868976) %>%
+          mutate(Wind.Gust = Wind.Gust * 0.868976) %>%
+          mutate(Pressure = Pressure * 33.8639) %>%
+          mutate(Diff = Time - lead(Time))
         
-        pressure.table <- data.frame(total.page[["STATION"]]$OBSERVATIONS.date_time, total.page[["STATION"]]$OBSERVATIONS.sea_level_pressure_set_1d) %>%
-          setNames(c("Time", "Pressure (mb)")) %>%
-          mutate(Time = as.POSIXct(Time, format = "%Y-%m-%dT%H:%M:%S%z"))
+        # Correct for times spanning midnight
+        date_change <- which(weather.page$Diff != 20)
+        
+        for (i in seq_along(weather.page$Time)) {
+          if (length(date_change) > 0) {
+            if (i > date_change) {
+            weather.page$Time[i] <-  weather.page$Time[i] - 86400
+          }
+          }
+        }
         
         
         # Wind direction plot
         plot_rct$dir.plot2 <- ggplot() + 
-          geom_point(data = dir.table, aes(x = Time, y = wind.rose(`Wind Direction`)), size = 1) +
+          geom_point(data = weather.page, aes(x = Time, y = Wind.Direction), size = 1) +
           theme_bw() +
           labs(title = "**Wind Direction**") +
           theme(plot.title = element_markdown()) +
           ylab("") +
           xlab("") +
           scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
-          scale_x_datetime(limits = c(min(dir.table$Time), max(dir.table$Time)), expand = c(0, 0))
+          scale_x_datetime(limits = c(min(weather.page$Time), max(weather.page$Time)), expand = c(0, 0))
         
         # Barometer plot
         plot_rct$bar.plot2 <- ggplot() + 
-          geom_line(data = pressure.table, aes(x = Time, y = `Pressure (mb)`), linewidth = 1) +
+          geom_line(data = weather.page, aes(x = Time, y = Pressure), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
           theme_bw() +
           labs(title = "**Barometric Pressure**") +
           theme(plot.title = element_markdown()) +
           ylab("Millibars") +
           xlab("") +
-          scale_x_datetime(limits = c(min(pressure.table$Time), max(pressure.table$Time)), expand = c(0, 0))
+          scale_x_datetime(limits = c(min(weather.page$Time), max(weather.page$Time)), expand = c(0, 0))
         
         # Wind rose
-        plot_rct$rose2 <- ggplot(tail(dir.table, 1), aes(x = `Mod Direction`)) +
+        plot_rct$rose2 <- ggplot(weather.page, aes(x = wind.deg(first(na.omit(Wind.Direction))))) +
           coord_polar(theta = "x", start = -pi/45, direction = 1) +
           geom_bar(width = 7, color = "gray10", fill = "red") +
           scale_x_continuous(breaks = seq(0, 359, 22.5), limits = c(-4, 356), 
@@ -480,52 +499,47 @@ server <- function(input, output, session) {
             axis.title = element_blank())
         
         # Catch errors due to missing gust data
-        a <- try({
-          gust.table <- data.frame(total.page[["STATION"]]$OBSERVATIONS.date_time, total.page[["STATION"]]$OBSERVATIONS.wind_gust_set_1) %>%
-            setNames(c("Time", "Wind Speed")) %>%
-            mutate(Time = as.POSIXct(Time, format = "%Y-%m-%dT%H:%M:%S%z"))
-          
-          gust.table$Time <- gust.table$Time
+        if (all(is.na(weather.page$Wind.Gust)) == FALSE) {
           
           # Wind + gust plot
           plot_rct$weather.plot2 <- ggplot() + 
-            geom_line(data = weather.table, aes(x = Time, y = `Wind Speed`), color = "black", linewidth = 1) +
-            geom_point(data = gust.table, aes(x = Time, y = `Wind Speed`), color = "#FF0000") +
+            geom_line(data = weather.page, aes(x = Time, y = Wind.Speed), color = "black", linewidth = 1) +
+            geom_point(data = weather.page, aes(x = Time, y = Wind.Gust), color = "#FF0000") +
             theme_bw() +
             labs(
               title = "**Wind Speed** and <span style='color:#FF0000;'>**Gust**</span></span>") +
             theme(plot.title = element_markdown()) +
-            scale_y_continuous(breaks = seq(0, max(na.omit(gust.table$`Wind Speed`)),5)) +
-            scale_x_datetime(limits = c(min(weather.table$Time), max(weather.table$Time)), expand = c(0, 0)) +
+            scale_y_continuous(breaks = seq(0, max(na.omit(weather.page$Wind.Speed)),5)) +
+            scale_x_datetime(limits = c(min(weather.page$Time), max(weather.page$Time)), expand = c(0, 0)) +
             ylab("Knots") +
             xlab("")
-        })
+        }
         
-        if (class(a) == "try-error") {
+        else {
           
           # Wind only plot
           plot_rct$weather.plot2 <- ggplot() +
-            geom_line(data = weather.table, aes(x = Time, y = `Wind Speed`), linewidth = 1) +
+            geom_line(data = weather.page, aes(x = Time, y = Wind.Speed), linewidth = 1) +
             theme_bw() +
             labs(
               title = "**Wind Speed** and <span style='color:#FF0000;'>**Gust**</span></span>") +
             theme(plot.title = element_markdown()) +
-            scale_y_continuous(breaks = seq(0, max(weather.table$`Wind Speed`),5)) +
-            scale_x_datetime(limits = c(min(weather.table$Time), max(weather.table$Time)), expand = c(0, 0)) +
+            scale_y_continuous(breaks = seq(0, max(weather.page$Wind.Speed),5)) +
+            scale_x_datetime(limits = c(min(weather.page$Time), max(weather.page$Time)), expand = c(0, 0)) +
             ylab("Knots") +
             xlab("")
         }
         
         # Last reading output
         output$time.label2 <- renderText({
-          paste("Last reading:", format(tail(weather.table$Time, 1), "%m-%d %H:%M"))
+          paste("Last Reading:", format(last_reading, "%m-%d %H:%M"))
         }) 
         
         # Current weather label output
         output$weather.label2 <- renderText({
-          paste0(wind.rose(last(na.omit(dir.table$`Wind Direction`))), " ",
-                 last(na.omit(weather.table$`Wind Speed`)), " knots ",
-                 "(", last(na.omit(dir.table$`Wind Direction`)), "°)")
+          paste0(first(na.omit(weather.page$Wind.Direction)), " ",
+                 first(na.omit(weather.page$Wind.Speed)) %>% round(0), " knots ",
+                 "(", wind.deg(first(na.omit(weather.page$Wind.Direction))), "°)")
           
         }) 
         
