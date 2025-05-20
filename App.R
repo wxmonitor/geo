@@ -7,6 +7,8 @@ library(jsonlite)
 library(scales)
 library(data.table)
 library(rvest)
+library(shinydisconnect)
+library(janitor)
 
 #### Edited 5/14/25 to fix deprecation of MESOWEST system
 #### Edited 5/13/25 to reflect new backyard buoy stations, remove tidal tab, and fix pipe error in wave syntax ####
@@ -18,7 +20,7 @@ library(rvest)
 #### Edited 9/28/22 to add Cape Flattery and New Dungeness ####
 #### Edited 5/29/22 to add coastal forecast & discussion ####
 
-
+## Functions ##
 
 # Wind rose function to convert wind direction degrees to compass points
 wind.rose <- function(x) {
@@ -49,9 +51,24 @@ marcast <- function(zone) {
 # Force local time zone
 Sys.setenv(TZ="America/Los_Angeles")
 
+# UI layout
 ui <- tabsetPanel(
   tabPanel("Station Reports",
            fluidPage(
+             # disconnectMessage(
+             #   text = "This station is unavailble at the moment. Please refresh the page and try again.",
+             #   refresh = "Refresh",
+             #   background = "#FFFFFF",
+             #   colour = "#444444",
+             #   refreshColour = "#337AB7",
+             #   overlayColour = "#000000",
+             #   overlayOpacity = 0.6,
+             #   width = 450,
+             #   top = 50,
+             #   size = 22,
+             #   css = ""
+             # ),
+             # actionButton('disconnect', 'Disconnect the app'),
              h3("WX Monitor", align = "center"),
              h3("Station Reports", align = "center"),
              leafletOutput("map2", width = "100%", height = "400px"),
@@ -411,6 +428,7 @@ server <- function(input, output, session) {
   observeEvent(
     input$map2_marker_click, 
     { 
+      
       click <- input$map2_marker_click
       site <- click$id
       type <- wind.sites$type[wind.sites$site == site]
@@ -442,17 +460,20 @@ server <- function(input, output, session) {
         weather.page <- url %>%
           read_html() %>%
           html_nodes("table") %>%
-          .[3] %>%
           html_table(fill = T) %>%
+          .[which(sapply(., FUN=function(X) "Time(PDT)" %in% colnames(X)))] %>%
           .[[1]] %>%
-          select(1, 6, 7, 8, 9) %>%
-          setNames(c("Time", "Wind.Speed", "Wind.Gust", "Wind.Direction", "Pressure")) %>%
+          clean_names() %>%
+          select(any_of(c("Time" = "time_pdt",
+                          "Wind.Speed" = "wind_speed_mph",
+                          "Wind.Gust" = "wind_gust_mph",
+                          "Wind.Direction" = "wind_direction",
+                          "Pressure" = "pressure_in"))) %>%
           mutate(Time = as.POSIXct(Time, format = "%H:%M")) %>%
-          mutate(Wind.Speed = Wind.Speed * 0.868976) %>%
-          mutate(Wind.Gust = Wind.Gust * 0.868976) %>%
+          mutate(across(matches(c("Wind.Speed", "Wind.Gust")), ~ . * 0.868976)) %>%
           mutate(Pressure = Pressure * 33.8639) %>%
           mutate(Diff = Time - lead(Time))
-        
+    
         # Correct for times spanning midnight
         date_change <- which(weather.page$Diff != 20)
         
@@ -774,103 +795,12 @@ server <- function(input, output, session) {
       } 
       
       
-      # else if (type == "SOFAR") {
-      #   
-      #   # UW SOFAR Buoy
-      #  
-      #   weather.page <- read.csv(file="https://erddap.backyardbuoys.org/erddap/tabledap/backyardbuoys_quileute_center.csv?time%2Csea_surface_wave_significant_height%2Csea_surface_wave_mean_period%2Csea_surface_wave_from_direction&time%3E=2025-04-13T20%3A05%3A00Z&latitude%3E=47.84575")
-      #   
-      #   # Strip and format weather data
-      #   weather.table <- data.frame(weather.page$data$wind) %>%
-      #     select(c(1,2,6)) %>%
-      #     setNames(c("Wind.Speed", "Wind.Dir", "Time")) %>%
-      #     mutate(Time = as.POSIXct(Time, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC")) %>%
-      #     mutate(Time = case_when(
-      #       dst(Time[1]) == TRUE ~ Time - 25200,
-      #       dst(Time[1]) == FALSE ~ Time - 28800)) %>%
-      #     mutate(Wind.Speed = Wind.Speed * 1.94384) %>%
-      #     mutate(Mod.Dir = case_when(as.double(Wind.Dir) > 350 ~  0,
-      #                                TRUE ~ as.double(Wind.Dir)))
-      #   
-      #   # Strip and format pressure data
-      #   baro.table <- data.frame(weather.page$data$barometerData) %>%
-      #     select(c(3, 5)) %>%
-      #     setNames(c("Time", "Pressure")) %>%
-      #     mutate(Time = as.POSIXct(Time, format = "%Y-%m-%dT%H:%M:%OS", tz = "UTC"))
-      #   
-      #   
-      #   # Wind direction plot
-      #   plot_rct$dir.plot2 <- ggplot() + 
-      #     geom_point(data = weather.table, aes(x = Time, y = wind.rose(Wind.Dir)), size = 1) +
-      #     theme_bw() +
-      #     labs(title = "**Wind Direction**") +
-      #     theme(plot.title = element_markdown()) +
-      #     ylab("") +
-      #     xlab("") +
-      #     scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
-      #     scale_x_datetime(limits = c(min(weather.table$Time), max(weather.table$Time)), expand = c(0, 0))
-      #   
-      #   # Barometer plot
-      #   plot_rct$bar.plot2 <- ggplot() + 
-      #     geom_line(data = baro.table, aes(x = Time, y = Pressure), linewidth = 1) +
-      #     geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
-      #     theme_bw() +
-      #     labs(title = "**Barometric Pressure**") +
-      #     theme(plot.title = element_markdown()) +
-      #     ylab("Millibars") +
-      #     xlab("") +
-      #     scale_x_datetime(limits = c(min(baro.table$Time), max(baro.table$Time)), expand = c(0, 0))
-      #   
-      #   
-      #   # Wind plot
-      #   plot_rct$weather.plot2 <- ggplot() + 
-      #     geom_line(data = weather.table, aes(x = Time, y = Wind.Speed), linewidth = 1) +
-      #     theme_bw() +
-      #     labs(
-      #       title = "**Wind Speed**") +
-      #     theme(plot.title = element_markdown()) +
-      #     scale_y_continuous(breaks = seq(0, max(weather.table$Wind.Speed), 5)) +
-      #     scale_x_datetime(limits = c(min(weather.table$Time), max(weather.table$Time)), expand = c(0, 0)) +
-      #     ylab("Knots") +
-      #     xlab("")
-      #   
-      #   # Wind rose
-      #   plot_rct$rose2 <- ggplot(weather.table, aes(x = last(na.omit(Mod.Dir)))) +
-      #     coord_polar(theta = "x", start = -pi/45, direction = 1) +
-      #     geom_bar(width = 7, color = "gray10", fill = "red") +
-      #     scale_x_continuous(breaks = seq(0, 359, 22.5), limits = c(-4, 356), 
-      #                        labels = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 
-      #                                   'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW')) +
-      #     theme_minimal() +
-      #     theme(
-      #       axis.text.y = element_blank(),
-      #       axis.title = element_blank())
-      #   
-      #   
-      #   # Last reading output
-      #   output$time.label2 <- renderText({
-      #     paste("Last reading:", format(last(na.omit(weather.table$Time)), "%m-%d %H:%M"))
-      #   }) 
-      #   
-      #   # Current weather label output
-      #   output$weather.label2 <- renderText({
-      #     paste0(wind.rose(last(na.omit(weather.table$Wind.Dir))), " ",
-      #            round(last(na.omit(weather.table$Wind.Speed)), 0), " knots ",
-      #            "(", last(na.omit(weather.table$Wind.Dir)), "°)")
-      #     
-      #   })
-      #   
-      #   
-      # }
-      
-      
       else {
         
         # APRS stations
         
         # Call API
-        days <- input$days
-        url <- paste0("https://weather.gladstonefamily.net/cgi-bin/wxobservations.pl?site=",site,"&days=",days)
+        url <- paste0("https://weather.gladstonefamily.net/cgi-bin/wxobservations.pl?site=",site,"&days=1")
         url.data <- RCurl::getURL(url, ssl.verifyhost=FALSE, ssl.verifypeer=FALSE)
         aprs <- read.csv(textConnection(url.data),
                          col.names = c("dt", "pressure", "temp", "dew_point", "rel_humidity", 
@@ -950,7 +880,7 @@ server <- function(input, output, session) {
         }) 
         
       }
-      
+
     })
   
   # Site label output
@@ -1930,6 +1860,10 @@ server <- function(input, output, session) {
   output$zone.data <- renderUI({
     HTML(marcast(input$zone))
   })
+  
+  # observeEvent(input$disconnect, {
+  #   session$close()
+  # })
   
 }
 
