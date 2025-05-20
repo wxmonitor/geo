@@ -9,7 +9,7 @@ library(data.table)
 library(rvest)
 library(janitor)
 
-#### Edited 5/19/25 to improve MESOWEST call ####
+#### Edited 5/19/25 to improve MESOWEST call and add error handling ####
 #### Edited 5/14/25 to fix deprecation of MESOWEST system
 #### Edited 5/13/25 to reflect new backyard buoy stations, remove tidal tab, and fix pipe error in wave syntax ####
 #### Edited 8/1/23 to add tidal stations
@@ -55,20 +55,6 @@ Sys.setenv(TZ="America/Los_Angeles")
 ui <- tabsetPanel(
   tabPanel("Station Reports",
            fluidPage(
-             # disconnectMessage(
-             #   text = "This station is unavailble at the moment. Please refresh the page and try again.",
-             #   refresh = "Refresh",
-             #   background = "#FFFFFF",
-             #   colour = "#444444",
-             #   refreshColour = "#337AB7",
-             #   overlayColour = "#000000",
-             #   overlayOpacity = 0.6,
-             #   width = 450,
-             #   top = 50,
-             #   size = 22,
-             #   css = ""
-             # ),
-             # actionButton('disconnect', 'Disconnect the app'),
              h3("WX Monitor", align = "center"),
              h3("Station Reports", align = "center"),
              leafletOutput("map2", width = "100%", height = "400px"),
@@ -203,6 +189,7 @@ server <- function(input, output, session) {
       leafletProxy('map') %>% 
         clearMarkers() %>%
         addMarkers(lng=clng, lat=clat, label = paste(lat.disp, lng.disp))
+      
       
       #  Call API and decode JSON
       url <- paste0("https://api.openweathermap.org/data/2.5/onecall?lat=",
@@ -441,6 +428,8 @@ server <- function(input, output, session) {
       
       leafletProxy('map2') 
       
+      tryCatch({
+      
       if (type == "MESO"){
         
         # Ediz Hook CG station
@@ -671,6 +660,7 @@ server <- function(input, output, session) {
           
         })
         
+        
       } else if (type == "CONT") {
         
         # Continuous wind stations 
@@ -880,7 +870,16 @@ server <- function(input, output, session) {
         }) 
         
       }
-
+    
+      }, 
+      
+      error = function(e){
+        output$weather.label2 <- renderText({
+          paste("This station is not available at the moment")
+      }) 
+        })
+      
+      
     })
   
   # Site label output
@@ -955,6 +954,8 @@ server <- function(input, output, session) {
       clng <- click$lng
       
       leafletProxy('map3')
+      
+      tryCatch({
       
       if (wave.type == "OOI") {
         
@@ -1718,7 +1719,11 @@ server <- function(input, output, session) {
         
         
       }
-      
+      }, error = function(e){
+        
+        output$weather.label2 <- renderText({
+          paste("This station is not available at the moment")
+        }) })
       
     })
   
@@ -1861,9 +1866,6 @@ server <- function(input, output, session) {
     HTML(marcast(input$zone))
   })
   
-  # observeEvent(input$disconnect, {
-  #   session$close()
-  # })
   
 }
 
