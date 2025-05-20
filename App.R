@@ -192,7 +192,7 @@ server <- function(input, output, session) {
       
       
       #  Call API and decode JSON
-      url <- paste0("https://api.openweathermap.org/data/2.5/onecall?lat=",
+      url <- paste0("https://api.openweathermap.org/data/3.0/onecall?lat=",
                     clat, "&lon=", clng, "&exclude=minutely&units=imperial&appid=8d5cf85099c375dcad074eff91b0d5d9")
       weather.page <- fromJSON(url, flatten = TRUE)
       
@@ -873,10 +873,17 @@ server <- function(input, output, session) {
     
       }, 
       
+      # Error displays
       error = function(e){
         output$weather.label2 <- renderText({
           paste("This station is not available at the moment")
-      }) 
+          }) 
+        output$time.label2 <- renderText({})
+        plot_rct$weather.plot2 <- ggplot()
+        plot_rct$bar.plot2 <- ggplot() 
+        plot_rct$dir.plot2 <- ggplot()
+        plot_rct$rose2 <- ggplot()
+        
         })
       
       
@@ -1719,11 +1726,29 @@ server <- function(input, output, session) {
         
         
       }
-      }, error = function(e){
+      }, 
+      
+      # Error handling
+      error = function(e){
         
-        output$weather.label2 <- renderText({
+        output$site.label3 <- renderText({
+          req(input$map3_marker_click)
+          paste0("Station: ", plot_rct$site)
+        })
+        output$weather.label3 <- renderText({
           paste("This station is not available at the moment")
-        }) })
+        }) 
+        output$time.current3 <- renderText({
+          paste("",format(Sys.time(), "%a %m-%d %H:%M"))
+        })
+        output$time.label3 <- renderText({})
+        plot_rct$wave.plot3 <- ggplot()
+        plot_rct$wind.wave.plot3 <- ggplot()
+        plot_rct$swell.plot3 <- ggplot() 
+        plot_rct$wave.dir.plot3 <- ggplot()
+        plot_rct$rose3 <- ggplot()
+        
+        })
       
     })
   
