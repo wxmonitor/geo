@@ -1,3 +1,15 @@
+#### Edited 5/19/25 to improve MESOWEST call and add error handling 
+#### Edited 5/14/25 to fix deprecation of MESOWEST system
+#### Edited 5/13/25 to reflect new backyard buoy stations, remove tidal tab, and fix pipe error in wave syntax 
+#### Edited 8/1/23 to add tidal stations 
+#### Edited 7/15/23 to fix mutate() bug for SOFAR wind data 
+#### Edited 5/1/23 to change name 
+#### Edited 12/18/22 to add Cape Elizabeth 
+#### Edited 11/20/22 to reflect new Oregon NWS forecast zones 
+#### Edited 9/28/22 to add Cape Flattery and New Dungeness 
+#### Edited 5/29/22 to add coastal forecast & discussion 
+
+# Load required packages
 library(tidyverse)
 library(lubridate)
 library(ggtext)
@@ -9,18 +21,12 @@ library(data.table)
 library(rvest)
 library(janitor)
 
-#### Edited 5/19/25 to improve MESOWEST call and add error handling ####
-#### Edited 5/14/25 to fix deprecation of MESOWEST system
-#### Edited 5/13/25 to reflect new backyard buoy stations, remove tidal tab, and fix pipe error in wave syntax ####
-#### Edited 8/1/23 to add tidal stations
-#### Edited 7/15/23 to fix mutate() bug for SOFAR wind data ####
-#### Edited 5/1/23 to change name ####
-#### Edited 12/18/22 to add Cape Elizabeth ####
-#### Edited 11/20/22 to reflect new Oregon NWS forecast zones ####
-#### Edited 9/28/22 to add Cape Flattery and New Dungeness ####
-#### Edited 5/29/22 to add coastal forecast & discussion ####
+# Force local time zone for use area
+Sys.setenv(TZ="America/Los_Angeles")
 
-## Functions ##
+#####################################################################################################
+####################### Custom Functions ############################################################
+#####################################################################################################
 
 # Wind rose function to convert wind direction degrees to compass points
 wind.rose <- function(x) {
@@ -36,6 +42,7 @@ wind.deg <- function(x) {
   degree[match(x, card1)]
 }
 
+# Marcast function reads NWS text forecasts
 marcast <- function(zone) {
   if (zone == "afd") {
     link <- "https://tgftp.nws.noaa.gov/data/raw/fx/fxus66.ksew.afd.sew.txt"
@@ -48,10 +55,10 @@ marcast <- function(zone) {
   }
 }
 
-# Force local time zone
-Sys.setenv(TZ="America/Los_Angeles")
+#####################################################################################################
+####################### UI Layout ###################################################################
+#####################################################################################################
 
-# UI layout
 ui <- tabsetPanel(
   tabPanel("Station Reports",
            fluidPage(
@@ -152,243 +159,18 @@ ui <- tabsetPanel(
   
 )
 
+#####################################################################################################
+####################### Server Function #############################################################
+#####################################################################################################
+
 
 server <- function(input, output, session) {
   
-  ########################
-  ### Lubber forecast ####
-  ########################
+  ################################################################
+  ####################### Station Reports ########################
+  ################################################################
   
-  # Initialize leaflet map
-  output$map <- renderLeaflet({
-    leaflet(options = leafletOptions(
-      attributionControl=FALSE)) %>% 
-      addTiles() %>%
-      setView(lat = 47.77920969878382, lng = -123.61182070598635 , zoom=8) %>%
-      addProviderTiles(providers$Esri.NatGeoWorldMap)
-  })
-  
-  # Container for reactive values
-  plot_rct <- reactiveValues()
-  
-  # Input location data from click event
-  click_data <- observeEvent(
-    input$map_click,
-    {
-      click <- input$map_click
-      clat <- click$lat
-      clng <- click$lng
-      
-      # Format coords for hover display
-      lat.disp <- case_when(clat > 0 ~ paste(clat %>% round(2), "N"),
-                            clat < 0 ~ paste(-clat %>% round(2), "S"))
-      lng.disp <- case_when(clng < 0 ~ paste(-clng %>% round(2), "W"),
-                            clng > 0 ~ paste(clng %>% round(2), "E"))
-      
-      # Use proxy to redraw map with location marker
-      leafletProxy('map') %>% 
-        clearMarkers() %>%
-        addMarkers(lng=clng, lat=clat, label = paste(lat.disp, lng.disp))
-      
-      
-      #  Call API and decode JSON
-      url <- paste0("https://api.openweathermap.org/data/3.0/onecall?lat=",
-                    clat, "&lon=", clng, "&exclude=minutely&units=imperial&appid=8d5cf85099c375dcad074eff91b0d5d9")
-      weather.page <- fromJSON(url, flatten = TRUE)
-      
-      # Strip and format hourly data
-      hourly.forecast <- data.frame(weather.page$hourly) %>%
-        mutate(dt = as.POSIXct(dt, origin="1970-01-01")) %>%
-        mutate_at(vars(wind_speed, wind_gust), ~ . * 0.868976)
-      
-      # Strip and format current data
-      current <- data.frame(weather.page$current) %>%
-        mutate_at(vars(dt, sunrise, sunset), ~ as.POSIXct(., origin="1970-01-01")) %>%
-        mutate(wind_speed = wind_speed * 0.868976) %>%
-        mutate(wind_deg = as.integer(wind_deg)) %>%
-        mutate(mod_deg = case_when(wind_deg > 352 && wind_deg < 356 ~ 352L,
-                                   wind_deg >= 356 && wind_deg <= 360 ~ 0L,
-                                   TRUE ~ wind_deg))
-      
-      # Load reactive container with current data
-      plot_rct$current <- current
-      
-      # Create night-time shade limits
-      shade <- data.frame(dusk = seq.POSIXt(current$sunset, by = 'day', length.out = 3), 
-                          dawn = seq.POSIXt(current$sunrise+86400, by = 'day', length.out = 3),
-                          top = Inf,
-                          bottom = -Inf)
-      
-      shade <- shade %>% 
-        mutate_at(vars(dusk, dawn),
-                  ~ replace(., which(. > tail(hourly.forecast$dt, 1)), tail(hourly.forecast$dt, 1))) %>%
-        mutate_at(vars(dusk, dawn),
-                  ~ replace(., which(. < head(hourly.forecast$dt, 1)), head(hourly.forecast$dt, 1)))
-      
-      # Wind rose polar plot
-      plot_rct$rose <- ggplot(current, aes(x = mod_deg)) +
-        coord_polar(theta = "x", start = -pi/45, direction = 1) +
-        geom_bar(width = 7, color = "gray10", fill = "red") +
-        scale_x_continuous(breaks = seq(0, 359, 22.5), limits = c(-4, 356), 
-                           labels = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 
-                                      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW')) +
-        theme_minimal() +
-        theme(
-          axis.text.y = element_blank(),
-          axis.title = element_blank())
-      
-      # Wind direction plot 
-      plot_rct$dir.plot <- ggplot() +
-        geom_rect(data = shade, 
-                  aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
-                  fill = 'light grey', alpha = 0.5) +
-        geom_point(data = hourly.forecast, aes(x = dt, y = wind.rose(wind_deg)), size = 1) +
-        theme_bw() +
-        labs(title = "**Wind Direction**") +
-        theme(plot.title = element_markdown()) +
-        ylab("") +
-        xlab("") +
-        scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
-        scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
-      
-      # Barometric pressure plot
-      plot_rct$bar.plot <- ggplot() + 
-        geom_rect(data = shade, 
-                  aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
-                  fill = 'light grey', alpha = 0.5) +
-        geom_line(data = hourly.forecast, aes(x = dt, y = pressure), linewidth = 1) +
-        geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
-        theme_bw() +
-        labs(title = "**Barometric Pressure**") +
-        theme(plot.title = element_markdown()) +
-        ylab("Millibars") +
-        xlab("") +
-        scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
-      
-      
-      # Wind speed and gust plot
-      plot_rct$weather.plot <- ggplot() +
-        geom_rect(data = shade, 
-                  aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
-                  fill = 'light grey', alpha = 0.5) +
-        geom_line(data = hourly.forecast, aes(x = dt, y = wind_speed), linewidth = 1) +
-        geom_line(data = hourly.forecast, aes(x = dt, y = wind_gust), color = "#FF0000") +
-        theme_bw() +
-        labs(
-          title = "**Wind Speed** and <span style='color:#FF0000;'>**Gust**</span></span>") +
-        theme(plot.title = element_markdown()) +
-        ylab("Knots") +
-        xlab("") + 
-        scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
-      
-      # Temperature and dew point plot
-      plot_rct$fog.plot <- ggplot() + 
-        geom_rect(data = shade, 
-                  aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
-                  fill = 'light grey', alpha = 0.5) +
-        geom_line(data = hourly.forecast, aes(x = dt, y = temp), linewidth = 1) +
-        geom_line(data = hourly.forecast, aes(x = dt, y = dew_point), color = "gray", linewidth = 1) +
-        theme_bw() +
-        labs(title = "**Temperature** and <span style='color:#B0B0B0;'>**Dew Point**</span></span>") +
-        theme(plot.title = element_markdown()) +
-        ylab("°F") +
-        xlab("") +
-        scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
-      
-      # Rain plot
-      if ("rain.1h" %in% colnames(hourly.forecast)) {
-        
-        plot_rct$rain.plot <- ggplot() +
-          geom_rect(data = shade, 
-                    aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
-                    fill = 'light grey', alpha = 0.5) +
-          geom_line(data = hourly.forecast, aes(x = dt, y = pop), linewidth = 1) +
-          geom_col(data = hourly.forecast, aes(x = dt, y = rain.1h/5), color = "darkgrey", fill = "#28d0eb") +
-          geom_text(data = hourly.forecast, aes(x = dt, y = rain.1h/5, label = rain.1h), size = 2, vjust = -0.5) +
-          theme_bw() +
-          labs(
-            title = "**Chance of Rain** and <span style='color:#28d0eb;'>**Accumulation**</span></span> (mm)") +
-          theme(plot.title = element_markdown()) +
-          ylab("Percent") + 
-          xlab("") +
-          scale_y_continuous(labels = percent_format(accuracy = 1)) +
-          coord_cartesian(ylim = c(0,1)) +
-          scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
-        
-      } else (
-        plot_rct$rain.plot <- ggplot() +
-          geom_rect(data = shade, 
-                    aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
-                    fill = 'light grey', alpha = 0.5) +
-          geom_line(data = hourly.forecast, aes(x = dt, y = pop), linewidth = 1) +
-          theme_bw() +
-          labs(
-            title = "**Chance of Rain** and <span style='color:#28d0eb;'>**Accumulation**</span></span> (mm)") +
-          theme(plot.title = element_markdown()) +
-          ylab("Percent") + 
-          xlab("") +
-          scale_y_continuous(labels = percent_format(accuracy = 1)) +
-          coord_cartesian(ylim = c(0,1)) +
-          scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
-      )
-      
-    })
-  
-  # Current wind output
-  output$weather.label <- renderText({
-    req(plot_rct$current)
-    paste0(wind.rose(plot_rct$current$wind_deg), " ",
-           round(plot_rct$current$wind_speed, 0), " knots ",
-           "(", plot_rct$current$wind_deg, "°)")
-    
-  }) 
-  
-  # Wind plot output
-  output$weather.plot <- renderPlot({
-    plot_rct$weather.plot
-  }) 
-  
-  
-  # Current time output
-  output$time.current <- renderText({
-    paste("",format(Sys.time(), "%a %m-%d %H:%M"))
-  })
-  
-  
-  # Wind direction plot output
-  output$dir.plot <- renderPlot({
-    plot_rct$dir.plot
-  })
-  
-  
-  # Rain plot output
-  output$rain.plot <- renderPlot({
-    plot_rct$rain.plot
-  })
-  
-  
-  # Temperature plot output
-  output$fog.plot <- renderPlot({
-    plot_rct$fog.plot
-  })
-  
-  
-  # Barometer plot output
-  output$bar.plot <- renderPlot({
-    plot_rct$bar.plot
-  }) 
-  
-  
-  # Wind rose output
-  output$rose <- renderPlot({
-    plot_rct$rose
-  }) 
-  
-  
-  ########################
-  ### Station reports ####
-  ########################
-  
+  # Read station index file
   aprs.sites <- read.csv("aprs.sites.csv",
                          colClasses = c("character", "character", "numeric", "numeric",
                                         "character", "character", "integer", "character",
@@ -396,6 +178,7 @@ server <- function(input, output, session) {
   wind.sites <- aprs.sites %>%
     filter(wind == "TRUE")
   
+  # Initialize leaflet map
   output$map2 <- renderLeaflet({
     leaflet(options = leafletOptions(
       attributionControl=FALSE)) %>% 
@@ -410,8 +193,10 @@ server <- function(input, output, session) {
                        weight = 3)
   })
   
+  # Container for reactive values
   plot_rct <- reactiveValues()
   
+  # Input station metadata from click event
   observeEvent(
     input$map2_marker_click, 
     { 
@@ -474,8 +259,7 @@ server <- function(input, output, session) {
           }
         }
         
-        
-        # Wind direction plot
+        # MESO Wind direction plot
         plot_rct$dir.plot2 <- ggplot() + 
           geom_point(data = weather.page, aes(x = Time, y = Wind.Direction), size = 1) +
           theme_bw() +
@@ -486,7 +270,7 @@ server <- function(input, output, session) {
           scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
           scale_x_datetime(limits = c(min(weather.page$Time), max(weather.page$Time)), expand = c(0, 0))
         
-        # Barometer plot
+        # MESO Barometer plot
         plot_rct$bar.plot2 <- ggplot() + 
           geom_line(data = weather.page, aes(x = Time, y = Pressure), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
@@ -497,7 +281,7 @@ server <- function(input, output, session) {
           xlab("") +
           scale_x_datetime(limits = c(min(weather.page$Time), max(weather.page$Time)), expand = c(0, 0))
         
-        # Wind rose
+        # MESO Wind rose
         plot_rct$rose2 <- ggplot(weather.page, aes(x = wind.deg(first(na.omit(Wind.Direction))))) +
           coord_polar(theta = "x", start = -pi/45, direction = 1) +
           geom_bar(width = 7, color = "gray10", fill = "red") +
@@ -512,7 +296,7 @@ server <- function(input, output, session) {
         # Catch errors due to missing gust data
         if (all(is.na(weather.page$Wind.Gust)) == FALSE) {
           
-          # Wind + gust plot
+          # MESO Wind + gust plot
           plot_rct$weather.plot2 <- ggplot() + 
             geom_line(data = weather.page, aes(x = Time, y = Wind.Speed), color = "black", linewidth = 1) +
             geom_point(data = weather.page, aes(x = Time, y = Wind.Gust), color = "#FF0000") +
@@ -528,7 +312,7 @@ server <- function(input, output, session) {
         
         else {
           
-          # Wind only plot
+          # MESO Wind only plot
           plot_rct$weather.plot2 <- ggplot() +
             geom_line(data = weather.page, aes(x = Time, y = Wind.Speed), linewidth = 1) +
             theme_bw() +
@@ -541,17 +325,16 @@ server <- function(input, output, session) {
             xlab("")
         }
         
-        # Last reading output
+        # MESO Last reading output
         output$time.label2 <- renderText({
           paste("Last Reading:", format(last_reading, "%m-%d %H:%M"))
         }) 
         
-        # Current weather label output
+        # MESO Current weather label output
         output$weather.label2 <- renderText({
           paste0(first(na.omit(weather.page$Wind.Direction)), " ",
                  first(na.omit(weather.page$Wind.Speed)) %>% round(0), " knots ",
                  "(", wind.deg(first(na.omit(weather.page$Wind.Direction))), "°)")
-          
         }) 
         
       } else if (type == "NDBC") {
@@ -567,7 +350,6 @@ server <- function(input, output, session) {
                          col.names = c("Year", "Month", "Day", "Hour", "Minute", "Wind.Dir", 
                                        "Wind.Speed", "Gust", NA, NA, NA, NA, "Pressure", 
                                        "Air.Temp", "Water.Temp", NA, NA, NA, NA))
-        
         
         # Subset past 24 hours of observations, clean and format data
         weather <- weather[1:wind.n,] %>%
@@ -585,7 +367,7 @@ server <- function(input, output, session) {
           mutate(Mod.Dir = case_when(Wind.Dir > 350 ~  0,
                                      TRUE ~ Wind.Dir))
         
-        # Wind direction plot
+        # NDBC Wind direction plot
         plot_rct$dir.plot2 <- ggplot() + 
           geom_point(data = weather, aes(x = Time, y = wind.rose(Wind.Dir)), size = 1) +
           theme_bw() +
@@ -596,7 +378,7 @@ server <- function(input, output, session) {
           scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
           scale_x_datetime(limits = c(min(weather$Time), max(weather$Time)), expand = c(0, 0))
         
-        # Barometer plot
+        # NDBC Barometer plot
         plot_rct$bar.plot2 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Pressure), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
@@ -610,7 +392,7 @@ server <- function(input, output, session) {
         # Avoid wind rose error if all direction data is missing
         if (all(is.na(weather$Wind.Speed)) == FALSE) {
           
-          # Wind rose
+          # NDBC Wind rose
           plot_rct$rose2 <- ggplot(weather, aes(x = first(na.omit(Mod.Dir)))) +
             coord_polar(theta = "x", start = -pi/45, direction = 1) +
             geom_bar(width = 7, color = "gray10", fill = "red") +
@@ -626,14 +408,12 @@ server <- function(input, output, session) {
           theme_void() +
           geom_text(aes(0,0,label='No wind data'))}
         
-        
         # Avoid scale error if all wind data is missing
         if (all(is.na(weather$Wind.Speed)) == FALSE) {
           maxWind <- max(rbind(weather$Wind.Speed, weather$Gust), na.rm = TRUE)
         } else (maxWind <- 10)
         
-        
-        # Wind plot
+        # NDBC Wind plot
         plot_rct$weather.plot2 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Wind.Speed), linewidth = 1) +
           geom_line(data = weather, aes(x = Time, y = Gust), color = "#FF0000") +
@@ -646,20 +426,17 @@ server <- function(input, output, session) {
           ylab("Knots") +
           xlab("")
         
-        
-        # Last reading output
+        # NDBC Last reading output
         output$time.label2 <- renderText({
           paste("Last reading:", format(first(na.omit(weather$Time)), "%m-%d %H:%M"))
         }) 
         
-        # Current weather label output
+        # NDBC Current weather label output
         output$weather.label2 <- renderText({
           paste0(wind.rose(first(na.omit(weather$Wind.Dir))), " ",
                  round(first(na.omit(weather$Wind.Speed)), 0), " knots ",
                  "(", first(na.omit(weather$Wind.Dir)), "°)")
-          
         })
-        
         
       } else if (type == "CONT") {
         
@@ -713,7 +490,7 @@ server <- function(input, output, session) {
             dst(Time[1]) == TRUE ~ Time - 25200,
             dst(Time[1]) == FALSE ~ Time - 28800))
         
-        # Pressure plot
+        # CONT Pressure plot
         plot_rct$bar.plot2 <- ggplot() + 
           geom_line(data = bar, aes(x = Time, y = Pressure), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
@@ -725,7 +502,7 @@ server <- function(input, output, session) {
           scale_x_datetime(limits = c(min(bar$Time), max(bar$Time)), expand = c(0, 0))
         
         
-        # Wind direction plot
+        # CONT Wind direction plot
         plot_rct$dir.plot2 <- ggplot() + 
           geom_point(data = weather, aes(x = Time, y = wind.rose(Wind.Dir)), size = 1) +
           theme_bw() +
@@ -736,8 +513,7 @@ server <- function(input, output, session) {
           scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
           scale_x_datetime(limits = c(min(weather$Time), max(weather$Time)), expand = c(0, 0))
         
-        
-        # Wind rose
+        # CONT Wind rose
         plot_rct$rose2 <- ggplot(weather, aes(x = first(na.omit(Mod.Dir)))) +
           coord_polar(theta = "x", start = -pi/45, direction = 1) +
           geom_bar(width = 7, color = "gray10", fill = "red") +
@@ -749,14 +525,13 @@ server <- function(input, output, session) {
             axis.text.y = element_blank(),
             axis.title = element_blank())
         
-        
         # Avoid scale error if all wind data is missing
         if (all(is.na(weather$Wind.Speed)) == FALSE) {
           maxWind <- max(rbind(weather$Wind.Speed, weather$Gust), na.rm = TRUE)
         } else (maxWind <- 10)
         
         
-        # Wind plot
+        # CONT Wind plot
         plot_rct$weather.plot2 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Wind.Speed), linewidth = 1) +
           geom_point(data = weather, aes(x = Time, y = Gust), color = "#FF0000") +
@@ -769,21 +544,18 @@ server <- function(input, output, session) {
           ylab("Knots") +
           xlab("")
         
-        # Last reading output
+        # CONT Last reading output
         output$time.label2 <- renderText({
           paste("Last reading:", format(first(na.omit(weather$Time)), "%m-%d %H:%M"))
         }) 
         
-        # Current weather label output
+        # CONT Current weather label output
         output$weather.label2 <- renderText({
           paste0(wind.rose(first(na.omit(weather$Wind.Dir))), " ",
                  round(first(na.omit(weather$Wind.Speed)), 0), " knots ",
                  "(", first(na.omit(weather$Wind.Dir)), "°)")
-          
         })
-        
       } 
-      
       
       else {
         
@@ -809,7 +581,7 @@ server <- function(input, output, session) {
         
         plot_rct$aprs <- aprs
         
-        # Wind rose plot
+        # APRS Wind rose plot
         plot_rct$rose2 <- ggplot(aprs[1,], aes(x = mod_deg)) +
           coord_polar(theta = "x", start = -pi/45, direction = 1) +
           geom_bar(width = 7, color = "gray10", fill = "red") +
@@ -821,7 +593,7 @@ server <- function(input, output, session) {
             axis.text.y = element_blank(),
             axis.title = element_blank())
         
-        # Wind direction plot
+        # APRS Wind direction plot
         plot_rct$dir.plot2 <- ggplot() +
           geom_point(data = aprs, aes(x = dt, y = wind.rose(wind_deg)), size = 1) +
           theme_bw() +
@@ -832,7 +604,7 @@ server <- function(input, output, session) {
           scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
           scale_x_datetime(limits = c(min(aprs$dt), max(aprs$dt)), expand = c(0, 0))
         
-        # Barometric pressure plot
+        # APRS Barometric pressure plot
         plot_rct$bar.plot2 <- ggplot() + 
           geom_line(data = aprs, aes(x = dt, y = pressure), linewidth = 1) +
           geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
@@ -843,7 +615,7 @@ server <- function(input, output, session) {
           xlab("") +
           scale_x_datetime(limits = c(min(aprs$dt), max(aprs$dt)), expand = c(0, 0))
         
-        # Wind speed plot
+        # APRS Wind speed plot
         plot_rct$weather.plot2 <- ggplot() +
           geom_line(data = aprs, aes(x = dt, y = wind_speed), linewidth = 1) +
           theme_bw() +
@@ -854,7 +626,7 @@ server <- function(input, output, session) {
           xlab("") + 
           scale_x_datetime(limits = c(min(aprs$dt), max(aprs$dt)), expand = c(0, 0))
         
-        # Current weather label output
+        # APRS Current weather label output
         output$weather.label2 <- renderText({
           req(input$map2_marker_click)
           paste0(wind.rose(first(na.omit(plot_rct$aprs$wind_deg))), " ",
@@ -863,14 +635,12 @@ server <- function(input, output, session) {
           
         }) 
         
-        # Last reading output
+        # APRS Last reading output
         output$time.label2 <- renderText({
           req(input$map2_marker_click)
           paste("Last reading:", format(first(na.omit(plot_rct$aprs$dt)), "%m-%d %H:%M"))
         }) 
-        
       }
-    
       }, 
       
       # Error displays
@@ -885,11 +655,9 @@ server <- function(input, output, session) {
         plot_rct$rose2 <- ggplot()
         
         })
-      
-      
     })
   
-  # Site label output
+  # Wind Site label output
   output$site.label2 <- renderText({
     req(input$map2_marker_click)
     paste0("Station: ", plot_rct$site)
@@ -900,7 +668,7 @@ server <- function(input, output, session) {
     plot_rct$weather.plot2
   }) 
   
-  # Current time label output
+  # Wind Current time label output
   output$time.current2 <- renderText({
     paste("",format(Sys.time(), "%a %m-%d %H:%M"))
   })
@@ -910,7 +678,7 @@ server <- function(input, output, session) {
     plot_rct$dir.plot2
   })
   
-  # Barometer plot output
+  # Wind Barometer plot output
   output$bar.plot2 <- renderPlot({
     plot_rct$bar.plot2
   }) 
@@ -922,13 +690,14 @@ server <- function(input, output, session) {
   
   
   
-  ########################
-  ### Wave reports ####
-  ########################
+  ################################################################
+  ####################### Wave Reports ###########################
+  ################################################################
   
   wave.sites <- aprs.sites %>%
     filter(wave == "TRUE")
   
+  # Initialize leaflet map
   output$map3 <- renderLeaflet({
     leaflet(options = leafletOptions(
       attributionControl=FALSE)) %>% 
@@ -943,8 +712,10 @@ server <- function(input, output, session) {
                        weight = 3)
   })
   
+  # Container for reactive values
   plot_rct <- reactiveValues()
   
+  # Input station metadata from click event
   observeEvent(
     input$map3_marker_click, 
     { 
@@ -992,7 +763,7 @@ server <- function(input, output, session) {
                                           TRUE ~ Mean.Wave.Dir)) %>%
           filter(!is.na(Wave.Height))
         
-        # Wave direction plot
+        # OOI Wave direction plot
         plot_rct$wave.dir.plot3 <- ggplot() + 
           geom_point(data = weather, aes(x = Time, y = wind.rose(Mean.Wave.Dir)), size = 1) +
           theme_bw() +
@@ -1004,7 +775,7 @@ server <- function(input, output, session) {
           scale_x_datetime(limits = c(min(weather$Time), max(weather$Time)), expand = c(0, 0))
         
         
-        # Wave rose
+        # OOI Wave rose
         plot_rct$rose3 <- ggplot(weather, aes(x = first(na.omit(Mod.Mean.Dir)))) +
           coord_polar(theta = "x", start = -pi/45, direction = 1) +
           geom_bar(width = 7, color = "gray10", fill = "red") +
@@ -1016,10 +787,9 @@ server <- function(input, output, session) {
             axis.text.y = element_blank(),
             axis.title = element_blank())
         
-        
         ymax <- max(rbind(weather$Wave.Height, weather$Dom.Period), na.rm = TRUE)
         
-        # Wave height and period plot
+        # OOI Wave height and period plot
         plot_rct$wave.plot3 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 0.5) +
           geom_line(data = weather %>%
@@ -1038,56 +808,51 @@ server <- function(input, output, session) {
           ylab("Feet") +
           xlab("")
         
-        
-        # Wave last reading output
+        # OOI Wave last reading output
         output$time.label3 <- renderText({
           paste("Last reading:", format(first(na.omit(weather$Time)), "%m-%d %H:%M"))
         }) 
         
-        # Wave current weather label output
+        # OOI Wave current weather label output
         output$weather.label3 <- renderUI({
           paste0(wind.rose(first(na.omit(weather$Mean.Wave.Dir))), " ",
                  round(first(na.omit(weather$Wave.Height)), 0), "' ",
                  "at ", first(na.omit(weather$Dom.Period)), " seconds")
-          
         })
         
-        # Site label output
+        # OOI Site label output
         output$site.label3 <- renderText({
           req(input$map3_marker_click)
           paste0("Station: ", plot_rct$site)
         })
         
-        # Current time label output
+        # OOI Current time label output
         output$time.current3 <- renderText({
           paste("",format(Sys.time(), "%a %m-%d %H:%M"))
         })
         
-        # Wave plot output
+        # OOI Wave plot output
         output$wave.plot3 <- renderPlot({
           plot_rct$wave.plot3
         }) 
         
-        # Wave direction plot output
+        # OOI Wave direction plot output
         output$wave.dir.plot3 <- renderPlot({
           plot_rct$wave.dir.plot3
         })
         
-        # Wave rose output
+        # OOI Wave rose output
         output$rose3 <- renderPlot({
           plot_rct$rose3
         }) 
         
-        # Swell plot blank
+        # OOI Swell plot blank
         output$swell.plot3 <- renderPlot({
         }) 
         
-        # Wind wave plot blank
+        # OOI Wind wave plot blank
         output$wind.wave.plot3 <- renderPlot({
         }) 
-        
-        
-        
         
       } else if (wave.type == "CA") {
         
@@ -1115,7 +880,7 @@ server <- function(input, output, session) {
         
         ymax <- max(rbind(weather$Wave.Height, weather$Dom.Period), na.rm = TRUE)
         
-        # Wave height and period plot
+        # CA Wave height and period plot
         plot_rct$wave.plot3 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 1) +
           geom_line(data = weather %>%
@@ -1130,7 +895,7 @@ server <- function(input, output, session) {
           ylab("Feet") +
           xlab("")
         
-        # Wave last reading output
+        # CA Wave last reading output
         output$time.label3 <- renderText({
           paste("Last reading:", format(first(na.omit(weather$Time)), "%m-%d %H:%M"))
         }) 
@@ -1142,35 +907,35 @@ server <- function(input, output, session) {
           
         })
         
-        # Site label output
+        # CA Site label output
         output$site.label3 <- renderText({
           req(input$map3_marker_click)
           paste0("Station: ", plot_rct$site)
         })
         
-        # Current time label output
+        # CA Current time label output
         output$time.current3 <- renderText({
           paste("",format(Sys.time(), "%a %m-%d %H:%M"))
         })
         
-        # Wave plot output
+        # CA Wave plot output
         output$wave.plot3 <- renderPlot({
           plot_rct$wave.plot3
         })
         
-        # Wave rose blank
+        # CA Wave rose blank
         output$rose3 <- renderPlot({
         }) 
         
-        # Swell plot blank
+        # CA Swell plot blank
         output$swell.plot3 <- renderPlot({
         }) 
         
-        # Wind wave plot blank
+        # CA Wind wave plot blank
         output$wind.wave.plot3 <- renderPlot({
         }) 
         
-        # Wave direction plot output
+        # CA Wave direction plot output
         output$wave.dir.plot3 <- renderPlot({
         })
         
@@ -1213,7 +978,7 @@ server <- function(input, output, session) {
         mean.ymax <- max(rbind(weather$Wave.Height, weather$Ave.Period), na.rm = TRUE)
         
         
-        # Mean wave height, direction, and period plot
+        # NDBCIN Mean wave height, direction, and period plot
         plot_rct$wave.plot3 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 0.5) +
           geom_line(data = weather %>%
@@ -1233,7 +998,7 @@ server <- function(input, output, session) {
           ylab("Feet") +
           xlab("")    
         
-        # Wave direction plot
+        # NDBCIN Wave direction plot
         plot_rct$wave.dir.plot3 <- ggplot() + 
           geom_point(data = weather, aes(x = Time, y = wind.rose(Mean.Wave.Dir)),
                      color = "#FF0000", size = 1) +
@@ -1251,10 +1016,7 @@ server <- function(input, output, session) {
           scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
           scale_x_datetime(limits = c(min(weather$Time), max(weather$Time)), expand = c(0, 0))
         
-
-        
-        
-        # Swell height, direction, and period plot
+        # NDBCIN Swell height, direction, and period plot
         plot_rct$swell.plot3 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Swell.Height), linewidth = 0.5) +
           geom_line(data = weather %>%
@@ -1274,7 +1036,7 @@ server <- function(input, output, session) {
           ylab("Feet") +
           xlab("") 
         
-        # Wind wave height, direction, and period plot
+        # NDBCIN Wind wave height, direction, and period plot
         plot_rct$wind.wave.plot3 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = W.Wave.Height), linewidth = 0.5) +
           geom_line(data = weather %>%
@@ -1294,23 +1056,21 @@ server <- function(input, output, session) {
           ylab("Feet") +
           xlab("") 
         
-        # Wave last reading output
+        # NDBCIN Wave last reading output
         output$time.label3 <- renderText({
           paste("Last reading:", format(first(na.omit(weather$Time)), "%m-%d %H:%M"))
         }) 
         
         if (first(weather$Wave.Height) < 0.9) {
           
-        
-        # Wave current weather label output
+        # NDBCIN Wave current weather label output
         output$weather.label3 <- renderUI({
           line1 <- paste0("Wind waves < 1' ",
                           "at ", first(na.omit(weather$W.Wave.Period)), " seconds")
           HTML(line1)
-          
         })
         
-        # Wave rose
+        # NDBCIN Wave rose
         plot_rct$rose3 <- ggplot() +
           coord_polar(theta = "x", start = -pi/45, direction = 1) +
           scale_x_continuous(breaks = seq(0, 359, 22.5), limits = c(-4, 356), 
@@ -1320,11 +1080,10 @@ server <- function(input, output, session) {
           theme(
             axis.text.y = element_blank(),
             axis.title = element_blank())
-        
         }
         
         else {
-          # Wave current weather label output
+          # NDBCIN Wave current weather label output
           output$weather.label3 <- renderUI({
             line1 <- paste0("<span style='color:#FF0000;'>Mean </span></span>", wind.rose(first(na.omit(weather$Mean.Wave.Dir))), " ",
                             round(first(na.omit(weather$Wave.Height)), 0), "' ",
@@ -1339,7 +1098,7 @@ server <- function(input, output, session) {
             
           })
           
-          # Wave rose
+          # NDBCIN Wave rose
           plot_rct$rose3 <- ggplot() +
             coord_polar(theta = "x", start = -pi/45, direction = 1) +
             geom_bar(data = weather, aes(x = first(na.omit(Mod.Mean.Dir))),
@@ -1355,49 +1114,43 @@ server <- function(input, output, session) {
             theme(
               axis.text.y = element_blank(),
               axis.title = element_blank())
-          
         }
         
-    
-        
-        # Site label output
+        # NDBCIN Site label output
         output$site.label3 <- renderText({
           req(input$map3_marker_click)
           paste0("Station: ", plot_rct$site)
         })
         
-        # Current time label output
+        # NDBCIN Current time label output
         output$time.current3 <- renderText({
           paste("",format(Sys.time(), "%a %m-%d %H:%M"))
         })
         
-        # Wave plot output
+        # NDBCIN Wave plot output
         output$wave.plot3 <- renderPlot({
           plot_rct$wave.plot3
         }) 
         
-        # Swell plot output
+        # NDBCIN Swell plot output
         output$swell.plot3 <- renderPlot({
           plot_rct$swell.plot3
         }) 
         
-        # Wind wave plot output
+        # NDBCIN Wind wave plot output
         output$wind.wave.plot3 <- renderPlot({
           plot_rct$wind.wave.plot3
         }) 
         
-        # Wave direction plot output
+        # NDBCIN Wave direction plot output
         output$wave.dir.plot3 <- renderPlot({
           plot_rct$wave.dir.plot3
         })
         
-        # Wave rose output
+        # NDBCIN Wave rose output
         output$rose3 <- renderPlot({
           plot_rct$rose3
         }) 
-        
-        
-     
         
       } else if (wave.type == "SOFAR") {
         
@@ -1417,8 +1170,7 @@ server <- function(input, output, session) {
           mutate(Mod.Mean.Dir = case_when(Mean.Wave.Dir > 350 ~  0,
                                           TRUE ~ Mean.Wave.Dir))
         
-        
-        # Wave direction plot
+        # SOFAR Wave direction plot
         plot_rct$wave.dir.plot3 <- ggplot() + 
           geom_point(data = weather, aes(x = Time, y = wind.rose(Mean.Wave.Dir)), size = 1) +
           theme_bw() +
@@ -1429,8 +1181,7 @@ server <- function(input, output, session) {
           scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
           scale_x_datetime(limits = c(min(weather$Time), max(weather$Time)), expand = c(0, 0))
         
-        
-        # Wave rose
+        # SOFAR Wave rose
         plot_rct$rose3 <- ggplot(weather, aes(x = last(na.omit(Mod.Mean.Dir)))) +
           coord_polar(theta = "x", start = -pi/45, direction = 1) +
           geom_bar(width = 7, color = "gray10", fill = "red") +
@@ -1442,10 +1193,9 @@ server <- function(input, output, session) {
             axis.text.y = element_blank(),
             axis.title = element_blank())
         
-        
         ymax <- max(rbind(weather$Wave.Height, weather$Mean.Period), na.rm = TRUE)
         
-        # Wave height and period plot
+        # SOFAR Wave height and period plot
         plot_rct$wave.plot3 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 0.5) +
           geom_line(data = weather, aes(x = Time, y = Mean.Period), 
@@ -1463,54 +1213,51 @@ server <- function(input, output, session) {
           ylab("Feet") +
           xlab("")
         
-        
-        # Wave last reading output
+        # SOFAR Wave last reading output
         output$time.label3 <- renderText({
           paste("Last reading:", format(last(na.omit(weather$Time)), "%m-%d %H:%M"))
         }) 
         
-        # Wave current weather label output
+        # SOFAR Wave current weather label output
         output$weather.label3 <- renderUI({
           paste0(wind.rose(last(na.omit(weather$Mean.Wave.Dir))), " ",
                  round(last(na.omit(weather$Wave.Height)), 0), "' ",
                  "at ", last(na.omit(weather$Mean.Period)), " seconds")
-          
         })
         
-        # Site label output
+        # SOFAR Site label output
         output$site.label3 <- renderText({
           req(input$map3_marker_click)
           paste0("Station: ", plot_rct$site)
         })
         
-        # Current time label output
+        # SOFAR Current time label output
         output$time.current3 <- renderText({
           paste("",format(Sys.time(), "%a %m-%d %H:%M"))
         })
         
-        # Wave plot output
+        # SOFAR Wave plot output
         output$wave.plot3 <- renderPlot({
           plot_rct$wave.plot3
         }) 
         
-        # Wave direction plot output
+        # SOFAR Wave direction plot output
         output$wave.dir.plot3 <- renderPlot({
           plot_rct$wave.dir.plot3
         })
         
-        # Wave rose output
+        # SOFAR Wave rose output
         output$rose3 <- renderPlot({
           plot_rct$rose3
         }) 
         
-        # Swell plot blank
+        # SOFAR Swell plot blank
         output$swell.plot3 <- renderPlot({
         }) 
         
-        # Wind wave plot blank
+        # SOFAR Wind wave plot blank
         output$wind.wave.plot3 <- renderPlot({
         }) 
-        
         
       } else {
         
@@ -1566,10 +1313,9 @@ server <- function(input, output, session) {
           mutate(Mod.Mean.Dir = case_when(Mean.Wave.Dir > 350 ~  0,
                                           TRUE ~ Mean.Wave.Dir)) 
         
-        
         mean.ymax <- max(rbind(weather$Wave.Height, weather$Ave.Period), na.rm = TRUE)
         
-        # Mean wave height, direction, and period plot
+        # NDBC Mean wave height, direction, and period plot
         plot_rct$wave.plot3 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Wave.Height), linewidth = 0.5) +
           geom_line(data = weather %>%
@@ -1589,7 +1335,7 @@ server <- function(input, output, session) {
           ylab("Feet") +
           xlab("")    
         
-        # Wave direction plot
+        # NDBC Wave direction plot
         plot_rct$wave.dir.plot3 <- ggplot() + 
           geom_point(data = weather, aes(x = Time, y = wind.rose(Mean.Wave.Dir)),
                      color = "#FF0000", size = 1) +
@@ -1607,7 +1353,7 @@ server <- function(input, output, session) {
           scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
           scale_x_datetime(limits = c(min(weather$Time), max(weather$Time)), expand = c(0, 0))
         
-        # Wave rose
+        # NDBC Wave rose
         plot_rct$rose3 <- ggplot() +
           coord_polar(theta = "x", start = -pi/45, direction = 1) +
           geom_bar(data = weather, aes(x = first(na.omit(Mod.Mean.Dir))),
@@ -1624,8 +1370,7 @@ server <- function(input, output, session) {
             axis.text.y = element_blank(),
             axis.title = element_blank())
         
-        
-        # Swell height, direction, and period plot
+        # NDBC Swell height, direction, and period plot
         plot_rct$swell.plot3 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = Swell.Height), linewidth = 0.5) +
           geom_line(data = weather %>%
@@ -1645,7 +1390,7 @@ server <- function(input, output, session) {
           ylab("Feet") +
           xlab("") 
         
-        # Wind wave height, direction, and period plot
+        # NDBC Wind wave height, direction, and period plot
         plot_rct$wind.wave.plot3 <- ggplot() + 
           geom_line(data = weather, aes(x = Time, y = W.Wave.Height), linewidth = 0.5) +
           geom_line(data = weather %>%
@@ -1665,12 +1410,12 @@ server <- function(input, output, session) {
           ylab("Feet") +
           xlab("") 
         
-        # Wave last reading output
+        # NDBC Wave last reading output
         output$time.label3 <- renderText({
           paste("Last reading:", format(first(na.omit(weather$Time)), "%m-%d %H:%M"))
         }) 
         
-        # Wave current weather label output
+        # NDBC Wave current weather label output
         output$weather.label3 <- renderUI({
           line1 <- paste0("<span style='color:#FF0000;'>Mean </span></span>", wind.rose(first(na.omit(weather$Mean.Wave.Dir))), " ",
                           round(first(na.omit(weather$Wave.Height)), 0), "' ",
@@ -1686,44 +1431,41 @@ server <- function(input, output, session) {
           
         })
         
-        # Site label output
+        # NDBC Site label output
         output$site.label3 <- renderText({
           req(input$map3_marker_click)
           paste0("Station: ", plot_rct$site)
         })
         
-        # Current time label output
+        # NDBC Current time label output
         output$time.current3 <- renderText({
           paste("",format(Sys.time(), "%a %m-%d %H:%M"))
         })
         
-        # Wave plot output
+        # NDBC Wave plot output
         output$wave.plot3 <- renderPlot({
           plot_rct$wave.plot3
         }) 
         
-        # Swell plot output
+        # NDBC Swell plot output
         output$swell.plot3 <- renderPlot({
           plot_rct$swell.plot3
         }) 
         
-        # Wind wave plot output
+        # NDBC Wind wave plot output
         output$wind.wave.plot3 <- renderPlot({
           plot_rct$wind.wave.plot3
         }) 
         
-        # Wave direction plot output
+        # NDBC Wave direction plot output
         output$wave.dir.plot3 <- renderPlot({
           plot_rct$wave.dir.plot3
         })
         
-        # Wave rose output
+        # NDBC Wave rose output
         output$rose3 <- renderPlot({
           plot_rct$rose3
         }) 
-        
-        
-        
         
       }
       }, 
@@ -1747,16 +1489,13 @@ server <- function(input, output, session) {
         plot_rct$swell.plot3 <- ggplot() 
         plot_rct$wave.dir.plot3 <- ggplot()
         plot_rct$rose3 <- ggplot()
-        
         })
-      
     })
   
-  
-  
-  ########################
-  ### Ship reports ####
-  ########################
+
+  ################################################################
+  ####################### Ship Reports ###########################
+  ################################################################
   
   # Call API 
   ship.link <- "https://www.ndbc.noaa.gov/data/realtime2/ship_obs.txt"
@@ -1772,7 +1511,6 @@ server <- function(input, output, session) {
                                       "DPD", "APD", "MWD", "Pressure", "Air.Temp", "Water.Temp",
                                       "Dew.Point", "Vis", "Press.Tend", "TCC", "S1HT", "S1PD",
                                       "S1DIR", "S2HT", "S2PD", "S2DIR", rep(NA, 8)))
-  
   
   # Subset local observations, clean and format data
   ship.weather <- ship.weather %>%
@@ -1790,7 +1528,6 @@ server <- function(input, output, session) {
     mutate(Wave.Height = Wave.Height * 3.28084) %>%
     mutate(Wind.Speed = Wind.Speed * 1.94384) %>%
     mutate(Gust = Gust *1.94384)
-  
   
   # Make wind arrow icon
   getWindColor <- function(ship.weather) {
@@ -1855,7 +1592,7 @@ server <- function(input, output, session) {
                               markerColor = getWaveColor(wave.weather),
                               fontFamily = "helvetica")
   
-  # Render ship observation map 
+  # Initialize leaflet map 
   output$map4 <- renderLeaflet({
     leaflet(options = leafletOptions(
       attributionControl=FALSE)) %>% 
@@ -1882,15 +1619,242 @@ server <- function(input, output, session) {
           "to", first(ship.weather$Time) %>% format("%H:%M"))
   })
   
-  ############################
-  ### NWS Marine Forecast ####
-  ############################
+
+  ################################################################
+  ####################### Open Forecast ##########################
+  ################################################################
+  
+  # Initialize leaflet map
+  output$map <- renderLeaflet({
+    leaflet(options = leafletOptions(
+      attributionControl=FALSE)) %>% 
+      addTiles() %>%
+      setView(lat = 47.77920969878382, lng = -123.61182070598635 , zoom=8) %>%
+      addProviderTiles(providers$Esri.NatGeoWorldMap)
+  })
+  
+  # Container for reactive values
+  plot_rct <- reactiveValues()
+  
+  # Input location data from click event
+  click_data <- observeEvent(
+    input$map_click,
+    {
+      click <- input$map_click
+      clat <- click$lat
+      clng <- click$lng
+      
+      # Format coords for hover display
+      lat.disp <- case_when(clat > 0 ~ paste(clat %>% round(2), "N"),
+                            clat < 0 ~ paste(-clat %>% round(2), "S"))
+      lng.disp <- case_when(clng < 0 ~ paste(-clng %>% round(2), "W"),
+                            clng > 0 ~ paste(clng %>% round(2), "E"))
+      
+      # Use proxy to redraw map with location marker
+      leafletProxy('map') %>% 
+        clearMarkers() %>%
+        addMarkers(lng=clng, lat=clat, label = paste(lat.disp, lng.disp))
+      
+      #  Call API and decode JSON
+      url <- paste0("https://api.openweathermap.org/data/3.0/onecall?lat=",
+                    clat, "&lon=", clng, "&exclude=minutely&units=imperial&appid=8d5cf85099c375dcad074eff91b0d5d9")
+      weather.page <- fromJSON(url, flatten = TRUE)
+      
+      # Strip and format hourly data
+      hourly.forecast <- data.frame(weather.page$hourly) %>%
+        mutate(dt = as.POSIXct(dt, origin="1970-01-01")) %>%
+        mutate_at(vars(wind_speed, wind_gust), ~ . * 0.868976)
+      
+      # Strip and format current data
+      current <- data.frame(weather.page$current) %>%
+        mutate_at(vars(dt, sunrise, sunset), ~ as.POSIXct(., origin="1970-01-01")) %>%
+        mutate(wind_speed = wind_speed * 0.868976) %>%
+        mutate(wind_deg = as.integer(wind_deg)) %>%
+        mutate(mod_deg = case_when(wind_deg > 352 && wind_deg < 356 ~ 352L,
+                                   wind_deg >= 356 && wind_deg <= 360 ~ 0L,
+                                   TRUE ~ wind_deg))
+      
+      # Load reactive container with current data
+      plot_rct$current <- current
+      
+      # Create night-time shade limits
+      shade <- data.frame(dusk = seq.POSIXt(current$sunset, by = 'day', length.out = 3), 
+                          dawn = seq.POSIXt(current$sunrise+86400, by = 'day', length.out = 3),
+                          top = Inf,
+                          bottom = -Inf)
+      
+      shade <- shade %>% 
+        mutate_at(vars(dusk, dawn),
+                  ~ replace(., which(. > tail(hourly.forecast$dt, 1)), tail(hourly.forecast$dt, 1))) %>%
+        mutate_at(vars(dusk, dawn),
+                  ~ replace(., which(. < head(hourly.forecast$dt, 1)), head(hourly.forecast$dt, 1)))
+      
+      # Open forecast Wind rose polar plot
+      plot_rct$rose <- ggplot(current, aes(x = mod_deg)) +
+        coord_polar(theta = "x", start = -pi/45, direction = 1) +
+        geom_bar(width = 7, color = "gray10", fill = "red") +
+        scale_x_continuous(breaks = seq(0, 359, 22.5), limits = c(-4, 356), 
+                           labels = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 
+                                      'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW')) +
+        theme_minimal() +
+        theme(
+          axis.text.y = element_blank(),
+          axis.title = element_blank())
+      
+      # Open forecast Wind direction plot 
+      plot_rct$dir.plot <- ggplot() +
+        geom_rect(data = shade, 
+                  aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
+                  fill = 'light grey', alpha = 0.5) +
+        geom_point(data = hourly.forecast, aes(x = dt, y = wind.rose(wind_deg)), size = 1) +
+        theme_bw() +
+        labs(title = "**Wind Direction**") +
+        theme(plot.title = element_markdown()) +
+        ylab("") +
+        xlab("") +
+        scale_y_discrete(limits = c('N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N')) +
+        scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
+      
+      # Open forecast Barometric pressure plot
+      plot_rct$bar.plot <- ggplot() + 
+        geom_rect(data = shade, 
+                  aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
+                  fill = 'light grey', alpha = 0.5) +
+        geom_line(data = hourly.forecast, aes(x = dt, y = pressure), linewidth = 1) +
+        geom_hline(aes(yintercept = 1013.25), linetype = "dashed", color = "gray") +
+        theme_bw() +
+        labs(title = "**Barometric Pressure**") +
+        theme(plot.title = element_markdown()) +
+        ylab("Millibars") +
+        xlab("") +
+        scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
+      
+      # Open forecast Wind speed and gust plot
+      plot_rct$weather.plot <- ggplot() +
+        geom_rect(data = shade, 
+                  aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
+                  fill = 'light grey', alpha = 0.5) +
+        geom_line(data = hourly.forecast, aes(x = dt, y = wind_speed), linewidth = 1) +
+        geom_line(data = hourly.forecast, aes(x = dt, y = wind_gust), color = "#FF0000") +
+        theme_bw() +
+        labs(
+          title = "**Wind Speed** and <span style='color:#FF0000;'>**Gust**</span></span>") +
+        theme(plot.title = element_markdown()) +
+        ylab("Knots") +
+        xlab("") + 
+        scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
+      
+      # Open forecast Temperature and dew point plot
+      plot_rct$fog.plot <- ggplot() + 
+        geom_rect(data = shade, 
+                  aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
+                  fill = 'light grey', alpha = 0.5) +
+        geom_line(data = hourly.forecast, aes(x = dt, y = temp), linewidth = 1) +
+        geom_line(data = hourly.forecast, aes(x = dt, y = dew_point), color = "gray", linewidth = 1) +
+        theme_bw() +
+        labs(title = "**Temperature** and <span style='color:#B0B0B0;'>**Dew Point**</span></span>") +
+        theme(plot.title = element_markdown()) +
+        ylab("°F") +
+        xlab("") +
+        scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
+      
+      # Open forecast Rain plot
+      if ("rain.1h" %in% colnames(hourly.forecast)) {
+        
+        plot_rct$rain.plot <- ggplot() +
+          geom_rect(data = shade, 
+                    aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
+                    fill = 'light grey', alpha = 0.5) +
+          geom_line(data = hourly.forecast, aes(x = dt, y = pop), linewidth = 1) +
+          geom_col(data = hourly.forecast, aes(x = dt, y = rain.1h/5), color = "darkgrey", fill = "#28d0eb") +
+          geom_text(data = hourly.forecast, aes(x = dt, y = rain.1h/5, label = rain.1h), size = 2, vjust = -0.5) +
+          theme_bw() +
+          labs(
+            title = "**Chance of Rain** and <span style='color:#28d0eb;'>**Accumulation**</span></span> (mm)") +
+          theme(plot.title = element_markdown()) +
+          ylab("Percent") + 
+          xlab("") +
+          scale_y_continuous(labels = percent_format(accuracy = 1)) +
+          coord_cartesian(ylim = c(0,1)) +
+          scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
+        
+      } else (
+        plot_rct$rain.plot <- ggplot() +
+          geom_rect(data = shade, 
+                    aes(xmin = dusk, xmax = dawn, ymin = bottom, ymax = top), 
+                    fill = 'light grey', alpha = 0.5) +
+          geom_line(data = hourly.forecast, aes(x = dt, y = pop), linewidth = 1) +
+          theme_bw() +
+          labs(
+            title = "**Chance of Rain** and <span style='color:#28d0eb;'>**Accumulation**</span></span> (mm)") +
+          theme(plot.title = element_markdown()) +
+          ylab("Percent") + 
+          xlab("") +
+          scale_y_continuous(labels = percent_format(accuracy = 1)) +
+          coord_cartesian(ylim = c(0,1)) +
+          scale_x_datetime(limits = c(min(hourly.forecast$dt), max(hourly.forecast$dt)), expand = c(0, 0))
+      )
+    })
+  
+  # Open forecast Current wind output
+  output$weather.label <- renderText({
+    req(plot_rct$current)
+    paste0(wind.rose(plot_rct$current$wind_deg), " ",
+           round(plot_rct$current$wind_speed, 0), " knots ",
+           "(", plot_rct$current$wind_deg, "°)")
+    
+  }) 
+  
+  # Open forecast Wind plot output
+  output$weather.plot <- renderPlot({
+    plot_rct$weather.plot
+  }) 
+  
+  
+  # Open forecast Current time output
+  output$time.current <- renderText({
+    paste("",format(Sys.time(), "%a %m-%d %H:%M"))
+  })
+  
+  
+  # Open forecast Wind direction plot output
+  output$dir.plot <- renderPlot({
+    plot_rct$dir.plot
+  })
+  
+  
+  # Open forecast Rain plot output
+  output$rain.plot <- renderPlot({
+    plot_rct$rain.plot
+  })
+  
+  
+  # Open forecast Temperature plot output
+  output$fog.plot <- renderPlot({
+    plot_rct$fog.plot
+  })
+  
+  
+  # Open forecast Barometer plot output
+  output$bar.plot <- renderPlot({
+    plot_rct$bar.plot
+  }) 
+  
+  
+  # Open forecast Wind rose output
+  output$rose <- renderPlot({
+    plot_rct$rose
+  })
+  
+  
+  ################################################################
+  ####################### NWS Marine Forecast ####################
+  ################################################################
   
   # Synopsis output
   output$zone.data <- renderUI({
     HTML(marcast(input$zone))
   })
-  
   
 }
 
