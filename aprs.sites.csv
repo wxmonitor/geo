@@ -6,7 +6,7 @@ LAPW1,La Push,47.913,-124.637,LAPW1,https://www.ndbc.noaa.gov/data/realtime2/LAP
 46099,Westport Shelf,46.986,-124.566,46099,https://www.ndbc.noaa.gov/data/realtime2/46099.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46099.txt,144,OOI,TRUE
 46100,Westport Offshore,46.851,-124.972,46100,https://www.ndbc.noaa.gov/data/realtime2/46100.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46100.txt,144,OOI,TRUE
 DESW1,Destruction Island,47.675,-124.485,DESW1,https://www.ndbc.noaa.gov/data/5day2/DESW1_5day,144,CONT,,,,,TRUE
-46267,Angeles Point,48.173,-123.607,46267,https://www.ndbc.noaa.gov/data/realtime2/46267.txt,48,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46267.spec,48,NDBC,TRUE
+46267,Angeles Point,48.173,-123.607,46267,https://www.ndbc.noaa.gov/data/realtime2/46267.txt,48,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46267.spec,48,NDBC,
 46248,Astoria Canyon,46.133,-124.644,46248,https://www.ndbc.noaa.gov/data/realtime2/46248.txt,48,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46248.spec,48,NDBC,TRUE
 46029,"Columbia River Bar, 20 NM W",46.163,-124.487,46029,https://www.ndbc.noaa.gov/data/5day2/46029_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46029.spec,24,NDBC,TRUE
 46089,Tillamook,45.936,-125.793,46089,https://www.ndbc.noaa.gov/data/5day2/46089_5day.txt,144,NDBC,TRUE,https://www.ndbc.noaa.gov/data/realtime2/46089.spec,24,NDBC,TRUE
